@@ -22,8 +22,7 @@
   "crons": [
     {
       "path": "/api/cron/cleanup",
-      "schedule": "0 1 * * *",
-      "description": "Daily cleanup at 1AM UTC"
+      "schedule": "0 1 * * *"
     }
   ],
   "env": {
