@@ -1,0 +1,226 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel - Minersurb{% endblock %}</title>
+    
+    <!-- Include landing page CSS -->
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Dashboard CSS -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <!-- Chart.js for reports -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="dashboard-body">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{% url 'admin_panel:dashboard' %}" class="logo-container">
+                <img src="{% static 'img/logo.png' %}" alt="Minersurb Logo" class="navbar-logo">
+                <span class="logo-text">MINERSURB ADMIN</span>
+            </a>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="nav-links">
+                <div class="user-info">
+                    <div class="user-avatar">{{ user.username|first|upper }}</div>
+                    <span class="d-none d-md-inline">{{ user.username }}</span>
+                </div>
+                <a href="{% url 'admin:index' %}" class="btn hover-lift d-none d-lg-inline-flex" title="Django Admin">
+                    <i class="fas fa-cog"></i>
+                    <span class="d-none d-md-inline">Admin</span>
+                </a>
+                <a href="{% url 'admin_panel:notifications' %}" class="btn hover-lift d-none d-lg-inline-flex" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="d-none d-md-inline">Notifications</span>
+                </a>
+                <a href="{% url 'core:logout' %}" class="btn hover-lift d-none d-lg-inline-flex">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="d-none d-md-inline">Logout</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <button class="sidebar-close d-lg-none" id="sidebarClose">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <!-- User Info in Sidebar for Mobile -->
+            <div class="sidebar-user-info d-lg-none">
+                <div class="user-avatar">{{ user.username|first|upper }}</div>
+                <div class="user-details">
+                    <div class="user-name">{{ user.username }}</div>
+                    <div class="user-role">Administrator</div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{% url 'admin_panel:dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'admin_panel:user_management' %}" class="nav-item {% if request.resolver_match.url_name == 'user_management' or request.resolver_match.url_name == 'user_detail' %}active{% endif %}">
+                    <i class="fas fa-users"></i>
+                    <span>User Management</span>
+                </a>
+                <a href="{% url 'admin_panel:deposit_management' %}" class="nav-item {% if request.resolver_match.url_name == 'deposit_management' or request.resolver_match.url_name == 'approve_deposit' or request.resolver_match.url_name == 'cancel_deposit' %}active{% endif %}">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>Deposit Management</span>
+                </a>
+                <a href="{% url 'admin_panel:withdrawal_management' %}" class="nav-item {% if request.resolver_match.url_name == 'withdrawal_management' or request.resolver_match.url_name == 'approve_withdrawal' or request.resolver_match.url_name == 'cancel_withdrawal' %}active{% endif %}">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>Withdrawal Management</span>
+                </a>
+                <a href="{% url 'admin_panel:investment_management' %}" class="nav-item {% if request.resolver_match.url_name == 'investment_management' %}active{% endif %}">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Investments</span>
+                </a>
+                <a href="{% url 'admin_panel:transaction_history' %}" class="nav-item {% if request.resolver_match.url_name == 'transaction_history' %}active{% endif %}">
+                    <i class="fas fa-history"></i>
+                    <span>Transaction History</span>
+                </a>
+                <a href="{% url 'admin_panel:reports' %}" class="nav-item {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Reports & Analytics</span>
+                </a>
+                <a href="{% url 'admin_panel:notifications' %}" class="nav-item {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                    {% if unread_notifications_count %}
+                    <span class="notification-badge">{{ unread_notifications_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'admin_panel:admin_logs' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_logs' %}active{% endif %}">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Admin Logs</span>
+                </a>
+                <a href="{% url 'admin_panel:site_settings' %}" class="nav-item {% if request.resolver_match.url_name == 'site_settings' %}active{% endif %}">
+                    <i class="fas fa-cog"></i>
+                    <span>Site Settings</span>
+                </a>
+                
+                <!-- Links to main site -->
+                <a href="{% url 'dashboard:overview' %}" class="nav-item nav-item-secondary">
+                    <i class="fas fa-external-link-alt"></i>
+                    <span>User Dashboard</span>
+                </a>
+                
+                <!-- Logout in Sidebar (Mobile Only) -->
+                <a href="{% url 'core:logout' %}" class="nav-item nav-item-logout d-lg-none">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            {% block admin_content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Include JavaScript -->
+    <script src="{% static 'js/three.min.js' %}"></script>
+    <script src="{% static 'js/vanta.fog.min.js' %}"></script>
+    <script src="{% static 'js/dashboard.js' %}"></script>
+    
+    <script>
+    // Mobile menu functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const sidebarClose = document.getElementById('sidebarClose');
+        
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+            menuBtn.classList.toggle('active');
+            document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : 'auto';
+        }
+        
+        function closeSidebar() {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            menuBtn.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        
+        if (menuBtn && sidebar) {
+            // Open sidebar
+            menuBtn.addEventListener('click', toggleSidebar);
+            
+            // Close sidebar with close button
+            if (sidebarClose) {
+                sidebarClose.addEventListener('click', closeSidebar);
+            }
+            
+            // Close sidebar with overlay
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', closeSidebar);
+            }
+            
+            // Close sidebar when clicking on a link
+            const navLinks = document.querySelectorAll('.nav-item');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    closeSidebar();
+                });
+            });
+            
+            // Close sidebar on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeSidebar();
+                }
+            });
+        }
+        
+        // Add logo hover effect
+        const logoContainer = document.querySelector('.logo-container');
+        const navbarLogo = document.querySelector('.navbar-logo');
+        
+        if (logoContainer && navbarLogo) {
+            logoContainer.addEventListener('mouseenter', function() {
+                navbarLogo.style.transform = 'rotate(5deg) scale(1.1)';
+            });
+            
+            logoContainer.addEventListener('mouseleave', function() {
+                navbarLogo.style.transform = 'rotate(0deg) scale(1)';
+            });
+        }
+        
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.transition = 'opacity 0.5s ease';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+    });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,1597 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Referrals - Minersurb{% endblock %}
+
+{% block dashboard_content %}
+<!-- Landing page background overlay -->
+<div class="landing-page-overlay"></div>
+
+<!-- Content Header -->
+<div class="content-header">
+    <div class="header-content">
+        <h1>Referral Program</h1>
+        <p>Invite friends and earn 5% commission on their first deposit.</p>
+        <div class="profile-summary">
+            <div class="profile-avatar">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="profile-info">
+                <div class="profile-name">Your Referral Network</div>
+                <div class="profile-details">
+                    <div class="detail-item">
+                        <i class="fas fa-users me-1"></i>
+                        <span>{{ referrals.count|default:0 }} Referral{{ referrals.count|pluralize }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-money-bill-wave me-1"></i>
+                        <span>${{ user.referral_earnings|default:"0.00" }} Earned</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-percentage me-1"></i>
+                        <span>5% Commission Rate</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if messages %}
+<div class="messages-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Referral Dashboard Grid -->
+<div class="dashboard-grid">
+    <!-- Referral Link Section -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-link me-2"></i>
+                Your Referral Link
+            </h2>
+        </div>
+        
+        <div class="referral-link-section">
+            <div class="form-group">
+                <label for="referralLink">
+                    <i class="fas fa-share-alt me-2"></i>
+                    Share Your Link
+                </label>
+                <div class="input-with-action">
+                    <input type="text" id="referralLink" value="{{ referral_link }}" 
+                           class="form-control" readonly>
+                    <button class="btn-icon copy-btn" onclick="copyReferralLink()" id="copyBtn">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <div class="form-help">
+                    <i class="fas fa-info-circle me-1"></i>Share this link to invite friends
+                </div>
+            </div>
+            
+            <div class="referral-code-card">
+                <div class="code-header">
+                    <i class="fas fa-qrcode me-2"></i>
+                    Your Referral Code
+                </div>
+                <div class="code-body">
+                    <div class="code-value">{{ user.referral_code }}</div>
+                    <button class="btn-icon copy-btn-sm" onclick="copyText('{{ user.referral_code }}')" title="Copy code">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="form-submit">
+                <button class="btn btn-primary" onclick="shareReferralLink()">
+                    <i class="fas fa-share-alt me-2"></i>Share Now
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Referral Stats Section -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-chart-bar me-2"></i>
+                Referral Statistics
+            </h2>
+        </div>
+        
+        <div class="stats-grid-compact">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ referrals.count|default:0 }}</div>
+                    <div class="stat-label">Total Referrals</div>
+                </div>
+                <div class="stat-trend">
+                    <i class="fas fa-arrow-up text-success"></i>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">${{ user.referral_earnings|default:"0.00" }}</div>
+                    <div class="stat-label">Total Earnings</div>
+                </div>
+                <div class="stat-trend">
+                    <i class="fas fa-arrow-up text-success"></i>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">5%</div>
+                    <div class="stat-label">Commission Rate</div>
+                </div>
+                <div class="stat-trend">
+                    <span class="badge status-active">Active</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-infinity"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">∞</div>
+                    <div class="stat-label">Referral Limit</div>
+                </div>
+                <div class="stat-trend">
+                    <span class="badge status-unlimited">Unlimited</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="how-it-works">
+            <h3>
+                <i class="fas fa-gift me-2"></i>
+                How It Works
+            </h3>
+            <div class="steps-container">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Share Your Link</h4>
+                        <p>Share your unique referral link with friends and family</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>They Sign Up</h4>
+                        <p>They register using your link and make their first deposit</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Earn Commission</h4>
+                        <p>You instantly earn <strong>5% commission</strong> on their first deposit</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Withdraw Earnings</h4>
+                        <p>Commission is credited instantly to your account balance</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Share Options Section -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-share-alt me-2"></i>
+                Share Options
+            </h2>
+            <small class="text-muted">Share across different platforms</small>
+        </div>
+        
+        <div class="share-options-grid">
+            <button class="share-option facebook" onclick="shareOnFacebook()">
+                <div class="share-icon">
+                    <i class="fab fa-facebook-f"></i>
+                </div>
+                <div class="share-info">
+                    <div class="share-name">Facebook</div>
+                    <div class="share-stats">2.9B users</div>
+                </div>
+            </button>
+            
+            <button class="share-option twitter" onclick="shareOnTwitter()">
+                <div class="share-icon">
+                    <i class="fab fa-twitter"></i>
+                </div>
+                <div class="share-info">
+                    <div class="share-name">Twitter</div>
+                    <div class="share-stats">450M users</div>
+                </div>
+            </button>
+            
+            <button class="share-option whatsapp" onclick="shareOnWhatsApp()">
+                <div class="share-icon">
+                    <i class="fab fa-whatsapp"></i>
+                </div>
+                <div class="share-info">
+                    <div class="share-name">WhatsApp</div>
+                    <div class="share-stats">2B users</div>
+                </div>
+            </button>
+            
+            <button class="share-option telegram" onclick="shareOnTelegram()">
+                <div class="share-icon">
+                    <i class="fab fa-telegram"></i>
+                </div>
+                <div class="share-info">
+                    <div class="share-name">Telegram</div>
+                    <div class="share-stats">800M users</div>
+                </div>
+            </button>
+            
+            <button class="share-option email" onclick="shareViaEmail()">
+                <div class="share-icon">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="share-info">
+                    <div class="share-name">Email</div>
+                    <div class="share-stats">Direct contact</div>
+                </div>
+            </button>
+            
+            <button class="share-option copy" onclick="copyReferralLink()">
+                <div class="share-icon">
+                    <i class="fas fa-copy"></i>
+                </div>
+                <div class="share-info">
+                    <div class="share-name">Copy Link</div>
+                    <div class="share-stats">Manual sharing</div>
+                </div>
+            </button>
+        </div>
+        
+        <div class="share-tips-card">
+            <h4>
+                <i class="fas fa-lightbulb me-2"></i>
+                Sharing Tips
+            </h4>
+            <ul class="tips-list">
+                <li>
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Share on social media with a personal message
+                </li>
+                <li>
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Send directly to friends interested in investing
+                </li>
+                <li>
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Join investment groups and share your experience
+                </li>
+                <li>
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Create content about your success with the platform
+                </li>
+                <li>
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Always be honest about the referral benefits
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Your Referrals Section -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-users me-2"></i>
+            Your Referrals
+            <span class="badge count-badge">{{ referrals.count }}</span>
+        </h2>
+        <div class="section-actions">
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="referralSearch" class="search-input" 
+                       placeholder="Search referrals..." oninput="searchReferrals()">
+            </div>
+        </div>
+    </div>
+    
+    {% if referrals %}
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="dashboard-table" id="referralsTable">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Join Date</th>
+                        <th>Status</th>
+                        <th>First Deposit</th>
+                        <th>Your Earnings</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for referral in referrals %}
+                    <tr>
+                        <td>
+                            <div class="user-info-cell">
+                                <div class="user-avatar-small">{{ referral.username|first|upper }}</div>
+                                <div class="user-details">
+                                    <div class="user-name">{{ referral.username }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="email-cell">{{ referral.email }}</td>
+                        <td>
+                            <div class="date-cell">
+                                <div class="date-value">{{ referral.date_joined|date:"M d, Y" }}</div>
+                                <div class="time-value">{{ referral.date_joined|time:"H:i" }}</div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if referral.deposits.first %}
+                            <span class="status-badge active">
+                                <i class="fas fa-check-circle me-1"></i>Active
+                            </span>
+                            {% else %}
+                            <span class="status-badge pending">
+                                <i class="fas fa-clock me-1"></i>Pending
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if referral.deposits.first %}
+                            <div class="amount-value">${{ referral.deposits.first.amount }}</div>
+                            {% else %}
+                            <span class="text-muted">No deposit</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if referral.deposits.first %}
+                            {% widthratio referral.deposits.first.amount 20 1 as commission %}
+                            <div class="earning-value">${{ commission|floatformat:2 }}</div>
+                            {% else %}
+                            <span class="text-muted">$0.00</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                {% if referral.deposits.first %}
+                                <button class="btn-icon" onclick="viewReferralDetails('{{ referral.id }}')" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                {% else %}
+                                <button class="btn-icon" onclick="sendReminder('{{ referral.id }}')" title="Send Reminder">
+                                    <i class="fas fa-bell"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="table-footer">
+            <div class="table-info">
+                Showing {{ referrals.count }} referral{{ referrals.count|pluralize }}
+            </div>
+            <div class="table-pagination">
+                <button class="btn-icon pagination-btn" disabled>
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <span class="pagination-current">Page 1</span>
+                <button class="btn-icon pagination-btn" disabled>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <h3>No Referrals Yet</h3>
+        <p>Start sharing your referral link to earn commissions!</p>
+        <div class="empty-actions">
+            <button class="btn btn-primary" onclick="copyReferralLink()">
+                <i class="fas fa-copy me-2"></i>Copy Your Link
+            </button>
+            <button class="btn btn-secondary" onclick="shareReferralLink()">
+                <i class="fas fa-share-alt me-2"></i>Share Now
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Referral Details Modal -->
+<div id="referralDetailsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>
+                <i class="fas fa-user-circle me-2"></i>
+                Referral Details
+            </h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="referralDetailsContent">
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin me-2"></i>
+                Loading details...
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Copy referral link
+function copyReferralLink() {
+    const link = document.getElementById('referralLink').value;
+    const button = document.getElementById('copyBtn');
+    
+    navigator.clipboard.writeText(link).then(() => {
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        button.classList.add('copied');
+        
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.classList.remove('copied');
+        }, 2000);
+    }).catch(err => {
+        alert('Failed to copy link. Please copy manually.');
+    });
+}
+
+// Copy text
+function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const button = event.target.closest('.copy-btn, .copy-btn-sm');
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        button.classList.add('copied');
+        
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.classList.remove('copied');
+        }, 2000);
+    }).catch(err => {
+        alert('Failed to copy text. Please copy manually.');
+    });
+}
+
+// Search referrals
+function searchReferrals() {
+    const searchTerm = document.getElementById('referralSearch').value.toLowerCase();
+    const rows = document.querySelectorAll('#referralsTable tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+}
+
+// Modal functions
+function openModal(modalId) {
+    document.getElementById(modalId).style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('referralDetailsModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        closeModal();
+    }
+};
+
+// View referral details
+function viewReferralDetails(referralId) {
+    // In a real implementation, you would fetch details from an API
+    document.getElementById('referralDetailsContent').innerHTML = `
+        <div class="detail-item">
+            <div class="detail-label">Referral ID</div>
+            <div class="detail-value">${referralId}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Details Loading</div>
+            <div class="detail-value">Please wait while we fetch the details...</div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+            <button class="btn btn-primary" onclick="refreshDetails('${referralId}')">Refresh</button>
+        </div>
+    `;
+    
+    openModal('referralDetailsModal');
+}
+
+function refreshDetails(referralId) {
+    // This would reload details in a real implementation
+    alert('Refreshing details...');
+}
+
+// Send reminder
+function sendReminder(referralId) {
+    if (confirm('Send a reminder email to this referral?')) {
+        // In a real implementation, you would send a request to your server
+        alert('Reminder email sent successfully!');
+    }
+}
+
+// Share functions
+function shareOnFacebook() {
+    const link = document.getElementById('referralLink').value;
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+}
+
+function shareOnTwitter() {
+    const link = document.getElementById('referralLink').value;
+    const text = `Join me on Minersurb and start earning daily profits!`;
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+}
+
+function shareOnWhatsApp() {
+    const link = document.getElementById('referralLink').value;
+    const text = `Join me on Minersurb and start earning daily profits! ${link}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+}
+
+function shareOnTelegram() {
+    const link = document.getElementById('referralLink').value;
+    const text = `Join me on Minersurb and start earning daily profits! ${link}`;
+    const url = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+}
+
+function shareViaEmail() {
+    const link = document.getElementById('referralLink').value;
+    const subject = 'Join me on Minersurb - Earn Daily Profits!';
+    const body = `Hi,
+
+I've been using Minersurb to earn daily profits from cryptocurrency investments. 
+I think you might be interested too!
+
+Join using my referral link: ${link}
+
+Best regards`;
+    
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+function shareReferralLink() {
+    copyReferralLink();
+    alert('Referral link copied to clipboard! You can now share it anywhere.');
+}
+
+// Initialize search
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('referralSearch');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', searchReferrals);
+    }
+});
+</script>
+
+<style>
+/* Referrals Page Specific Styles - Following Profile Layout */
+
+/* Profile Summary */
+.profile-summary {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-top: 2rem;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.5rem;
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.profile-details {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.detail-item i {
+    color: var(--primary-color);
+    width: 16px;
+}
+
+/* Referral Link Section */
+.referral-link-section {
+    padding: 1rem 0;
+}
+
+.input-with-action {
+    position: relative;
+    margin-bottom: 0.5rem;
+}
+
+.input-with-action .form-control {
+    padding-right: 3rem;
+}
+
+.input-with-action .copy-btn {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.input-with-action .copy-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.input-with-action .copy-btn.copied {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.referral-code-card {
+    margin: 1.5rem 0;
+    padding: 1.25rem;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: var(--radius-lg);
+}
+
+.code-header {
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+}
+
+.code-header i {
+    color: var(--primary-color);
+}
+
+.code-body {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.code-value {
+    flex: 1;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.125rem;
+    word-break: break-all;
+}
+
+.copy-btn-sm {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.copy-btn-sm:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.copy-btn-sm.copied {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+/* Stats Grid Compact */
+.stats-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-normal);
+}
+
+.stat-card:hover {
+    border-color: rgba(148, 163, 184, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.stat-trend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.text-success {
+    color: var(--success-color) !important;
+}
+
+.badge.status-active {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.badge.status-unlimited {
+    background: rgba(139, 92, 246, 0.1);
+    color: #8B5CF6;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+/* How It Works */
+.how-it-works {
+    margin-top: 2rem;
+}
+
+.how-it-works h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.steps-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.step {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-normal);
+}
+
+.step:hover {
+    border-color: rgba(148, 163, 184, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateX(5px);
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.125rem;
+    flex-shrink: 0;
+}
+
+.step-content h4 {
+    color: var(--text-primary);
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.step-content p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.step-content strong {
+    color: var(--success-color);
+    font-weight: 700;
+}
+
+/* Share Options Grid */
+.share-options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.share-option {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    text-align: left;
+    width: 100%;
+}
+
+.share-option:hover {
+    transform: translateY(-5px);
+    border-color: rgba(148, 163, 184, 0.4);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.share-option.facebook:hover {
+    background: rgba(24, 119, 242, 0.1);
+    border-color: rgba(24, 119, 242, 0.3);
+}
+
+.share-option.twitter:hover {
+    background: rgba(29, 161, 242, 0.1);
+    border-color: rgba(29, 161, 242, 0.3);
+}
+
+.share-option.whatsapp:hover {
+    background: rgba(37, 211, 102, 0.1);
+    border-color: rgba(37, 211, 102, 0.3);
+}
+
+.share-option.telegram:hover {
+    background: rgba(0, 136, 204, 0.1);
+    border-color: rgba(0, 136, 204, 0.3);
+}
+
+.share-option.email:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.share-option.copy:hover {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.share-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.share-option.facebook .share-icon {
+    background: linear-gradient(135deg, #1877F2, #0D5FD8);
+}
+
+.share-option.twitter .share-icon {
+    background: linear-gradient(135deg, #1DA1F2, #0D8BD9);
+}
+
+.share-option.whatsapp .share-icon {
+    background: linear-gradient(135deg, #25D366, #1DA851);
+}
+
+.share-option.telegram .share-icon {
+    background: linear-gradient(135deg, #0088CC, #006699);
+}
+
+.share-option.email .share-icon {
+    background: linear-gradient(135deg, #6366F1, #4F46E5);
+}
+
+.share-option.copy .share-icon {
+    background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+}
+
+.share-info {
+    flex: 1;
+}
+
+.share-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.share-stats {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* Share Tips Card */
+.share-tips-card {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.share-tips-card h4 {
+    color: var(--text-primary);
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tips-list {
+    color: var(--text-muted);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tips-list li {
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.tips-list li:last-child {
+    margin-bottom: 0;
+}
+
+.tips-list i {
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+/* Your Referrals Section */
+.badge.count-badge {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+.section-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.search-container {
+    position: relative;
+    min-width: 250px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    z-index: 1;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 3rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: all var(--transition-fast);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Table Styles */
+.user-info-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.user-avatar-small {
+    width: 32px;
+    height: 32px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+}
+
+.user-details {
+    min-width: 0;
+}
+
+.user-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.email-cell {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.date-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.date-value {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.time-value {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.status-badge.active {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-badge.pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning-color);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.amount-value,
+.earning-value {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.earning-value {
+    color: var(--success-color);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-icon:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+/* Table Footer */
+.table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding: 1rem 0;
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.table-info {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.table-pagination {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.pagination-btn {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: var(--text-muted);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.pagination-btn:not(:disabled):hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-current {
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-secondary);
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+.empty-state p {
+    font-size: 1rem;
+    max-width: 400px;
+    margin: 0 auto 2rem;
+    line-height: 1.5;
+}
+
+.empty-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.empty-actions .btn {
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 140px;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal-content {
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.modal-header h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+.loading-state {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.detail-item {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.detail-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.detail-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.detail-value {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    word-break: break-all;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid-compact {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .share-options-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .content-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .profile-summary {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+    
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        font-size: 2rem;
+    }
+    
+    .profile-name {
+        font-size: 1.5rem;
+        text-align: center;
+    }
+    
+    .profile-details {
+        justify-content: center;
+    }
+    
+    .detail-item {
+        justify-content: center;
+    }
+    
+    .step {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .step-number {
+        margin: 0 auto;
+    }
+    
+    .search-container {
+        min-width: 200px;
+    }
+    
+    .empty-state {
+        padding: 3rem 1rem;
+    }
+    
+    .modal-content {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .content-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .dashboard-section {
+        padding: 1.25rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.25rem;
+    }
+    
+    .stats-grid-compact {
+        grid-template-columns: 1fr;
+    }
+    
+    .share-options-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .share-option {
+        padding: 1rem;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.25rem;
+    }
+    
+    .empty-state p {
+        font-size: 0.95rem;
+    }
+    
+    .empty-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .empty-actions .btn {
+        width: 100%;
+        max-width: 250px;
+    }
+    
+    .section-actions {
+        width: 100%;
+    }
+    
+    .search-container {
+        width: 100%;
+    }
+    
+    /* Hide less important columns on mobile */
+    .dashboard-table th:nth-child(2),
+    .dashboard-table td:nth-child(2),
+    .dashboard-table th:nth-child(6),
+    .dashboard-table td:nth-child(6) {
+        display: none;
+    }
+    
+    .table-footer {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}

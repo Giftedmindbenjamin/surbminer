@@ -1,0 +1,1000 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Make Deposit - Minersurb{% endblock %}
+
+{% block dashboard_content %}
+<!-- Landing page background overlay -->
+<div class="landing-page-overlay"></div>
+
+<!-- Content Header -->
+<div class="content-header">
+    <div class="header-content">
+        <h1>Make Deposit</h1>
+        <p>Choose an investment plan and start earning daily profits.</p>
+        <div class="balance-display">
+            <i class="fas fa-wallet me-1"></i>
+            <small class="text-muted">Available Balance: <span class="balance-amount">${{ user.account_balance|default:"0.00" }}</span></small>
+        </div>
+    </div>
+</div>
+
+{% if messages %}
+<div class="messages-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Investment Plans -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-chart-pie me-2"></i>
+            Choose Investment Plan
+        </h2>
+    </div>
+    
+    <div class="plans-grid">
+        <div class="plan-card">
+            <div class="plan-badge">Most Popular</div>
+            <div class="plan-header">
+                <h3>BASIC PLAN</h3>
+                <div class="plan-range">$100 – $499.9</div>
+            </div>
+            <div class="plan-details">
+                <div class="daily-profit">3% Daily</div>
+                <div class="plan-duration">For 3 Days</div>
+                <div class="plan-total">Total: 109% Return</div>
+            </div>
+            <div class="plan-actions">
+                <button class="btn btn-secondary" onclick="openCalculator('basic')">
+                    <i class="fas fa-calculator me-2"></i>Calculate
+                </button>
+                <button class="btn btn-primary" onclick="selectPlan('basic', 100, 999, 3, 3)">
+                    <i class="fas fa-check me-2"></i>Select
+                </button>
+            </div>
+        </div>
+        
+        <div class="plan-card">
+            <div class="plan-header">
+                <h3>STANDARD PLAN</h3>
+                <div class="plan-range">$500 – $4,999</div>
+            </div>
+            <div class="plan-details">
+                <div class="daily-profit">4.5% Daily</div>
+                <div class="plan-duration">For 5 Days</div>
+                <div class="plan-total">Total: 122.5% Return</div>
+            </div>
+            <div class="plan-actions">
+                <button class="btn btn-secondary" onclick="openCalculator('standard')">
+                    <i class="fas fa-calculator me-2"></i>Calculate
+                </button>
+                <button class="btn btn-primary" onclick="selectPlan('standard', 500, 4999, 4.5, 5)">
+                    <i class="fas fa-check me-2"></i>Select
+                </button>
+            </div>
+        </div>
+        
+        <div class="plan-card">
+            <div class="plan-header">
+                <h3>ADVANCED PLAN</h3>
+                <div class="plan-range">$5,000 – $14,999</div>
+            </div>
+            <div class="plan-details">
+                <div class="daily-profit">6% Daily</div>
+                <div class="plan-duration">For 7 Days</div>
+                <div class="plan-total">Total: 142% Return</div>
+            </div>
+            <div class="plan-actions">
+                <button class="btn btn-secondary" onclick="openCalculator('advanced')">
+                    <i class="fas fa-calculator me-2"></i>Calculate
+                </button>
+                <button class="btn btn-primary" onclick="selectPlan('advanced', 5000, 14999, 6, 7)">
+                    <i class="fas fa-check me-2"></i>Select
+                </button>
+            </div>
+        </div>
+        
+        <div class="plan-card">
+            <div class="plan-header">
+                <h3>PREMIUM PLAN</h3>
+                <div class="plan-range">$15,000 – Unlimited</div>
+            </div>
+            <div class="plan-details">
+                <div class="daily-profit">8% Daily</div>
+                <div class="plan-duration">For 10 Days</div>
+                <div class="plan-total">Total: 180% Return</div>
+            </div>
+            <div class="plan-actions">
+                <button class="btn btn-secondary" onclick="openCalculator('premium')">
+                    <i class="fas fa-calculator me-2"></i>Calculate
+                </button>
+                <button class="btn btn-primary" onclick="selectPlan('premium', 15000, 999999, 8, 10)">
+                    <i class="fas fa-check me-2"></i>Select
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Deposit Form (Initially Hidden) -->
+<div id="depositForm" class="dashboard-section" style="display: none;">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-arrow-down me-2"></i>
+            Complete Deposit - <span id="selectedPlanName"></span>
+        </h2>
+    </div>
+    
+    <div class="form-container">
+        <form method="POST" action="{% url 'dashboard:deposit' %}" class="deposit-form">
+            {% csrf_token %}
+            <input type="hidden" name="plan_id" id="planId" value="">
+            
+            <div class="form-group">
+                <label for="amount">
+                    <i class="fas fa-dollar-sign me-2"></i>
+                    Deposit Amount ($)
+                </label>
+                <input type="number" id="amount" name="amount" class="form-control" required>
+                <div class="form-help" id="amountRange"></div>
+            </div>
+            
+            <div class="form-group dropdown-container">
+    <label for="crypto_type">
+        <i class="fas fa-coins me-2"></i>
+        Select Cryptocurrency
+    </label>
+    <select id="crypto_type" name="crypto_type" class="form-control" required>
+        <option value="">Choose cryptocurrency...</option>
+        <option value="BTC">Bitcoin (BTC)</option>
+        <option value="ETH">Ethereum (ETH)</option>
+        <option value="TRX">TRON (TRX)</option>
+        <option value="USDT">USDT</option>
+    </select>
+</div>
+            
+            <div class="payment-details" id="paymentDetails" style="display: none;">
+                <div class="payment-header">
+                    <h4>
+                        <i class="fas fa-wallet me-2"></i>
+                        Payment Details
+                    </h4>
+                </div>
+                <div class="payment-info">
+                    <p class="payment-note">Send the exact amount to the following address:</p>
+                    <div class="wallet-address" id="walletAddress"></div>
+                    <button type="button" class="btn btn-secondary copy-btn" onclick="copyAddress()">
+                        <i class="fas fa-copy me-2"></i>Copy Address
+                    </button>
+                </div>
+            </div>
+            
+            <div class="form-submit">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane me-2"></i>Submit Deposit Request
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Calculator Modal -->
+<div id="calculatorModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Profit Calculator</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="calculatorContent">
+            <!-- Calculator content will be loaded here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Modal functions
+function openModal(modalId) {
+    document.getElementById(modalId).style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('calculatorModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        closeModal();
+    }
+};
+
+// Plan selection
+let selectedPlan = null;
+
+function selectPlan(planName, minAmount, maxAmount, dailyPercent, duration) {
+    selectedPlan = { planName, minAmount, maxAmount, dailyPercent, duration };
+    
+    // Update form
+    document.getElementById('selectedPlanName').textContent = planName.toUpperCase() + ' PLAN';
+    document.getElementById('amount').min = minAmount;
+    document.getElementById('amount').max = maxAmount;
+    document.getElementById('amount').value = minAmount;
+    document.getElementById('amount').placeholder = `Enter amount ($${minAmount} - $${maxAmount === 999999 ? 'Unlimited' : maxAmount})`;
+    
+    const maxText = maxAmount === 999999 ? 'Unlimited' : `$${maxAmount}`;
+    document.getElementById('amountRange').innerHTML = `<i class="fas fa-info-circle me-1"></i> Range: $${minAmount} - ${maxText}`;
+    
+    // Show form
+    document.getElementById('depositForm').style.display = 'block';
+    
+    // Scroll to form
+    document.getElementById('depositForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Calculator
+function openCalculator(planType) {
+    const plans = {
+        basic: { name: 'BASIC PLAN', min: 100, max: 999, daily: 3, days: 3 },
+        standard: { name: 'STANDARD PLAN', min: 500, max: 4999, daily: 4.5, days: 5 },
+        advanced: { name: 'ADVANCED PLAN', min: 5000, max: 14999, daily: 6, days: 7 },
+        premium: { name: 'PREMIUM PLAN', min: 15000, max: 999999, daily: 8, days: 10 }
+    };
+    
+    const plan = plans[planType];
+    const maxText = plan.max === 999999 ? 'Unlimited' : `$${plan.max}`;
+    
+    document.getElementById('calculatorContent').innerHTML = `
+        <div class="calculator-plan">
+            <h4>${plan.name}</h4>
+            <p class="plan-range"><i class="fas fa-dollar-sign me-1"></i>$${plan.min} - ${maxText}</p>
+            <p class="plan-rate"><i class="fas fa-chart-line me-1"></i>${plan.daily}% daily for ${plan.days} days</p>
+        </div>
+        
+        <div class="calculator-input">
+            <label for="calcAmount">
+                <i class="fas fa-dollar-sign me-2"></i>
+                Investment Amount ($)
+            </label>
+            <input type="number" id="calcAmount" class="form-control" 
+                   min="${plan.min}" ${plan.max ? `max="${plan.max}"` : ''}
+                   placeholder="Enter amount" oninput="calculateProfit(${plan.daily}, ${plan.days})">
+        </div>
+        
+        <div id="calcResults" class="calculator-results">
+            <div class="empty-result">
+                <i class="fas fa-calculator"></i>
+                <p>Enter an amount to see calculations</p>
+            </div>
+        </div>
+        
+        <div class="calculator-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">
+                <i class="fas fa-times me-2"></i>Cancel
+            </button>
+            <button class="btn btn-primary" onclick="selectPlan('${planType}', ${plan.min}, ${plan.max}, ${plan.daily}, ${plan.days}); closeModal();">
+                <i class="fas fa-check me-2"></i>Select Plan
+            </button>
+        </div>
+    `;
+    
+    openModal('calculatorModal');
+}
+
+function calculateProfit(dailyPercent, duration) {
+    const amount = parseFloat(document.getElementById('calcAmount').value);
+    
+    if (!amount || amount <= 0) {
+        document.getElementById('calcResults').innerHTML = 
+            `<div class="empty-result">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>Enter a valid amount</p>
+            </div>`;
+        return;
+    }
+    
+    const dailyProfit = (amount * dailyPercent) / 100;
+    const totalProfit = dailyProfit * duration;
+    const totalReturn = amount + totalProfit;
+    const roi = ((totalReturn - amount) / amount * 100).toFixed(1);
+    
+    document.getElementById('calcResults').innerHTML = `
+        <div class="result-grid">
+            <div class="result-item">
+                <div class="result-label">Daily Profit</div>
+                <div class="result-value success">$${dailyProfit.toFixed(2)}</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">Total Profit</div>
+                <div class="result-value success">$${totalProfit.toFixed(2)}</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">ROI</div>
+                <div class="result-value primary">${roi}%</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">Duration</div>
+                <div class="result-value">${duration} days</div>
+            </div>
+        </div>
+        <div class="result-total">
+            <div class="total-label">Total Return after ${duration} days</div>
+            <div class="total-value">$${totalReturn.toFixed(2)}</div>
+        </div>
+    `;
+}
+
+// Show wallet address when crypto is selected
+document.getElementById('crypto_type').addEventListener('change', function() {
+    const addresses = {
+        'BTC': '1FoBdNHEmiPstsyHrYqWMxCJFJWuSuzG4F',
+        'ETH': '0xf09a1b161ee1ad45433a4f8ff476ac5b5c2ba17e',
+        'TRX': 'TMgY9cXzFv3sFTUMPnuj34CLdjhTNFKUZA ',
+        'USDT': '0xf09a1b161ee1ad45433a4f8ff476ac5b5c2ba17e'
+    };
+    
+    const selected = this.value;
+    const paymentDetails = document.getElementById('paymentDetails');
+    const walletAddress = document.getElementById('walletAddress');
+    
+    if (selected && addresses[selected]) {
+        walletAddress.textContent = addresses[selected];
+        paymentDetails.style.display = 'block';
+    } else {
+        paymentDetails.style.display = 'none';
+    }
+});
+
+function copyAddress() {
+    const address = document.getElementById('walletAddress').textContent;
+    const button = event.target.closest('.copy-btn');
+    
+    navigator.clipboard.writeText(address).then(() => {
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
+        button.classList.add('copied');
+        
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.classList.remove('copied');
+        }, 2000);
+    }).catch(err => {
+        alert('Failed to copy address. Please copy manually.');
+    });
+}
+
+// Initialize form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.deposit-form');
+    const amountInput = document.getElementById('amount');
+    
+    amountInput.addEventListener('input', function() {
+        if (selectedPlan) {
+            const value = parseFloat(this.value);
+            if (value < selectedPlan.minAmount) {
+                this.setCustomValidity(`Minimum amount is $${selectedPlan.minAmount}`);
+            } else if (selectedPlan.maxAmount !== 999999 && value > selectedPlan.maxAmount) {
+                this.setCustomValidity(`Maximum amount is $${selectedPlan.maxAmount}`);
+            } else {
+                this.setCustomValidity('');
+            }
+        }
+    });
+});
+</script>
+
+<style>
+/* Deposit Page Specific Styles */
+
+/* Content Header */
+.balance-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    max-width: 300px;
+}
+
+.balance-amount {
+    color: var(--success-color);
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+/* Messages */
+.messages-container {
+    margin-bottom: 2rem;
+}
+
+.alert {
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+    border: 1px solid;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    backdrop-filter: blur(10px);
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: var(--success-color);
+}
+
+.alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: var(--danger-color);
+}
+
+.alert-info {
+    background: rgba(14, 165, 233, 0.1);
+    border-color: rgba(14, 165, 233, 0.3);
+    color: var(--info-color);
+}
+
+/* Plans Grid */
+.plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.plan-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    transition: all var(--transition-normal);
+    position: relative;
+}
+
+.plan-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(148, 163, 184, 0.4);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.plan-badge {
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 0.375rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 700;
+    z-index: 1;
+}
+
+.plan-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.plan-header h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.plan-range {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.plan-details {
+    text-align: center;
+    margin: 1.5rem 0;
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.daily-profit {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--success-color);
+    margin-bottom: 0.5rem;
+}
+
+.plan-duration {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.plan-total {
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.plan-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.plan-actions .btn {
+    flex: 1;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* Form Container */
+.form-container {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    padding: 2rem;
+}
+
+.deposit-form {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all var(--transition-fast);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.form-help {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Payment Details */
+.payment-details {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.payment-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.payment-header h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.payment-note {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.wallet-address {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    font-family: monospace;
+    word-break: break-all;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.copy-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.copy-btn.copied {
+    background: var(--success-color) !important;
+    border-color: var(--success-color) !important;
+}
+
+.form-submit {
+    margin-top: 2rem;
+}
+
+.form-submit .btn {
+    width: 100%;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal-content {
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.modal-header h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+/* Calculator Styles */
+.calculator-plan {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.calculator-plan h4 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.plan-range {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.plan-rate {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.calculator-input {
+    margin-bottom: 1.5rem;
+}
+
+.calculator-input label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.calculator-results {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-result {
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.empty-result i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+.empty-result p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.result-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.result-item {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.result-label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.result-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.result-value.success {
+    color: var(--success-color);
+}
+
+.result-value.primary {
+    color: var(--primary-color);
+}
+
+.result-total {
+    text-align: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.total-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.total-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.calculator-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.calculator-actions .btn {
+    flex: 1;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .plans-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .content-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .plans-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .plan-card {
+        padding: 1.25rem;
+    }
+    
+    .daily-profit {
+        font-size: 1.75rem;
+    }
+    
+    .form-container {
+        padding: 1.5rem;
+    }
+    
+    .modal-content {
+        padding: 1.5rem;
+    }
+    
+    .result-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .calculator-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 576px) {
+    .content-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .balance-display {
+        max-width: 100%;
+    }
+    
+    .plan-header h3 {
+        font-size: 1.125rem;
+    }
+    
+    .plan-actions {
+        flex-direction: column;
+    }
+    
+    .form-container {
+        padding: 1.25rem;
+    }
+
+    /* Cryptocurrency Dropdown Styling */
+.form-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 16px 16px;
+    padding-right: 3rem;
+    cursor: pointer;
+}
+
+.form-group select:focus {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='18 15 12 9 6 15'%3E%3C/polyline%3E%3C/svg%3E");
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.form-group select option {
+    background-color: rgba(30, 41, 59, 0.95);
+    color: var(--text-primary);
+    padding: 1rem;
+}
+
+.form-group select option:checked {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.form-group select option:hover {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Custom dropdown container */
+.dropdown-container {
+    position: relative;
+}
+
+.dropdown-container::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    pointer-events: none;
+}
+
+.dropdown-container:focus-within::after {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='18 15 12 9 6 15'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+/* For better mobile dropdown */
+@media (max-width: 768px) {
+    .form-group select {
+        padding-right: 2.5rem;
+        background-position: right 0.75rem center;
+    }
+    
+    .dropdown-container::after {
+        right: 0.75rem;
+    }
+}
+}
+</style>
+{% endblock %}

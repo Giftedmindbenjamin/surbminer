@@ -1,0 +1,315 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Sign Up - Minersurb{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Additional styles for signup page */
+    .password-requirements {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
+    }
+    
+    .requirement {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+    }
+    
+    .requirement i {
+        font-size: 0.75rem;
+    }
+    
+    .requirement.met {
+        color: var(--success-color);
+    }
+    
+    .requirement.unmet {
+        color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <!-- Floating particles -->
+    <div class="auth-particles" id="authParticles"></div>
+    
+    <div class="auth-card">
+        <h2>Join Minersurb Today</h2>
+        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">
+            Start your crypto investment journey in minutes
+        </p>
+        
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <form method="POST" action="{% url 'core:signup' %}" class="auth-form" id="signupForm">
+            {% csrf_token %}
+            
+            {% if referral_code %}
+            <input type="hidden" name="referral_code" value="{{ referral_code }}">
+            <div class="referral-banner">
+                <i class="fas fa-gift"></i>
+                <span>Joining via referral: <strong>{{ referral_code }}</strong></span>
+            </div>
+            {% endif %}
+            
+            <!-- Personal Information -->
+            <div class="form-group">
+                <label for="full_name">Full Name</label>
+                <input type="text" id="full_name" name="full_name" class="form-control" 
+                       placeholder="Enter your full name" required value="{{ request.POST.full_name|default:'' }}">
+                <i class="fas fa-user form-icon"></i>
+            </div>
+            
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" class="form-control" 
+                       placeholder="Choose a username" required value="{{ request.POST.username|default:'' }}">
+                <i class="fas fa-at form-icon"></i>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="form-control" 
+                       placeholder="your@email.com" required value="{{ request.POST.email|default:'' }}">
+                <i class="fas fa-envelope form-icon"></i>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirm_email">Confirm Email</label>
+                <input type="email" id="confirm_email" name="confirm_email" class="form-control" 
+                       placeholder="Confirm your email" required value="{{ request.POST.confirm_email|default:'' }}">
+                <i class="fas fa-envelope form-icon"></i>
+            </div>
+            
+            <!-- Password Section -->
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div style="position: relative;">
+                    <input type="password" id="password" name="password" class="form-control" 
+                           placeholder="Create a strong password" required>
+                    <button type="button" class="password-toggle" id="togglePassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="password-strength-container">
+                    <small class="password-hint">
+                        <i class="fas fa-info-circle"></i> Password strength
+                    </small>
+                    <div class="password-strength">
+                        <div class="password-strength-bar" id="passwordStrength"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <div style="position: relative;">
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" 
+                           placeholder="Confirm your password" required>
+                    <button type="button" class="password-toggle" id="toggleConfirmPassword">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Crypto Addresses Section -->
+            <div class="crypto-section">
+                <h4><i class="fas fa-wallet"></i> Crypto Addresses (Optional)</h4>
+                
+                <div class="crypto-address-group">
+                    <i class="fab fa-bitcoin crypto-icon"></i>
+                    <input type="text" id="bitcoin_address" name="bitcoin_address" 
+                           class="form-control crypto-input" placeholder="Bitcoin (BTC) address"
+                           value="{{ request.POST.bitcoin_address|default:'' }}">
+                </div>
+                
+                <div class="crypto-address-group">
+                    <i class="fab fa-ethereum crypto-icon"></i>
+                    <input type="text" id="ethereum_address" name="ethereum_address" 
+                           class="form-control crypto-input" placeholder="Ethereum (ETH) address"
+                           value="{{ request.POST.ethereum_address|default:'' }}">
+                </div>
+                
+                <div class="crypto-address-group">
+                    <i class="fas fa-coins crypto-icon"></i>
+                    <input type="text" id="trx_address" name="trx_address" 
+                           class="form-control crypto-input" placeholder="TRON (TRX) address"
+                           value="{{ request.POST.trx_address|default:'' }}">
+                </div>
+                
+                <div class="crypto-address-group">
+                    <i class="fas fa-dollar-sign crypto-icon"></i>
+                    <input type="text" id="usdt_address" name="usdt_address" 
+                           class="form-control crypto-input" placeholder="USDT (ERC20/TRC20) address"
+                           value="{{ request.POST.usdt_address|default:'' }}">
+                </div>
+            </div>
+            
+            <button type="submit" class="auth-submit-btn">
+                <i class="fas fa-user-plus"></i> Create Free Account
+            </button>
+            
+            <div class="auth-links">
+                Already have an account? <a href="{% url 'core:login' %}">Login here</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Create floating particles
+    createAuthParticles();
+    
+    // Password toggle functionality
+    const togglePassword = document.getElementById('togglePassword');
+    const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirm_password');
+    const strengthBar = document.getElementById('passwordStrength');
+    
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+    }
+    
+    if (toggleConfirmPassword && confirmPasswordInput) {
+        toggleConfirmPassword.addEventListener('click', function() {
+            const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            confirmPasswordInput.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+    }
+    
+    // Password strength indicator
+    if (passwordInput && strengthBar) {
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            
+            // Criteria
+            const hasMinLength = password.length >= 8;
+            const hasUpperCase = /[A-Z]/.test(password);
+            const hasLowerCase = /[a-z]/.test(password);
+            const hasNumbers = /[0-9]/.test(password);
+            const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+            
+            if (hasMinLength) strength += 20;
+            if (hasUpperCase) strength += 20;
+            if (hasLowerCase) strength += 20;
+            if (hasNumbers) strength += 20;
+            if (hasSpecial) strength += 20;
+            
+            strengthBar.style.width = strength + '%';
+            strengthBar.className = 'password-strength-bar ';
+            
+            if (strength < 40) {
+                strengthBar.classList.add('strength-weak');
+            } else if (strength < 70) {
+                strengthBar.classList.add('strength-fair');
+            } else if (strength < 90) {
+                strengthBar.classList.add('strength-good');
+            } else {
+                strengthBar.classList.add('strength-strong');
+            }
+        });
+    }
+    
+    // Form validation
+    const signupForm = document.getElementById('signupForm');
+    if (signupForm) {
+        signupForm.addEventListener('submit', function(e) {
+            const email = document.getElementById('email').value;
+            const confirmEmail = document.getElementById('confirm_email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            
+            let isValid = true;
+            let errorMessage = '';
+            
+            // Email validation
+            if (email !== confirmEmail) {
+                isValid = false;
+                errorMessage = 'Emails do not match!';
+            }
+            
+            // Password validation
+            if (password !== confirmPassword) {
+                isValid = false;
+                errorMessage = 'Passwords do not match!';
+            }
+            
+            if (password.length < 8) {
+                isValid = false;
+                errorMessage = 'Password must be at least 8 characters long!';
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert(errorMessage);
+                return false;
+            }
+        });
+    }
+});
+
+function createAuthParticles() {
+    const container = document.getElementById('authParticles');
+    if (!container) return;
+    
+    const particleCount = 25;
+    
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'auth-particle';
+        
+        // Random properties
+        const size = Math.random() * 6 + 2;
+        const posX = Math.random() * 100;
+        const posY = Math.random() * 100;
+        const delay = Math.random() * 20;
+        const duration = Math.random() * 25 + 15;
+        
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${posX}%`;
+        particle.style.top = `${posY}%`;
+        particle.style.animationDelay = `${delay}s`;
+        particle.style.animationDuration = `${duration}s`;
+        particle.style.opacity = Math.random() * 0.1 + 0.05;
+        
+        // Random gradient colors
+        const colors = [
+            'var(--primary-color)',
+            'var(--secondary-color)',
+            'var(--accent-color)',
+            'var(--success-color)'
+        ];
+        particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+        
+        container.appendChild(particle);
+    }
+}
+</script>
+{% endblock %}

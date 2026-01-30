@@ -1,0 +1,1107 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Profile - Minersurb{% endblock %}
+
+{% block dashboard_content %}
+<!-- Landing page background overlay -->
+<div class="landing-page-overlay"></div>
+
+<!-- Content Header -->
+<div class="content-header">
+    <div class="header-content">
+        <h1>My Profile</h1>
+        <p>Manage your personal information and account settings.</p>
+        <div class="profile-summary">
+            <div class="profile-avatar">
+                {{ user.username|first|upper }}
+            </div>
+            <div class="profile-info">
+                <div class="profile-name">{{ user.full_name|default:user.username }}</div>
+                <div class="profile-details">
+                    <div class="detail-item">
+                        <i class="fas fa-user me-1"></i>
+                        <span>{{ user.username }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        <span>Member since {{ user.date_joined|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-id-badge me-1"></i>
+                        <span>Active Account</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if messages %}
+<div class="messages-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Profile Sections Grid -->
+<div class="dashboard-grid">
+    <!-- Personal Information -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-user-circle me-2"></i>
+                Personal Information
+            </h2>
+        </div>
+        
+        <form method="POST" action="{% url 'dashboard:profile' %}" class="profile-form">
+            {% csrf_token %}
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="full_name">
+                        <i class="fas fa-user me-2"></i>
+                        Full Name
+                    </label>
+                    <input type="text" id="full_name" name="full_name" class="form-control" 
+                           value="{{ user.full_name|default:'' }}" required>
+                    <div class="form-help">Your legal full name</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="username">
+                        <i class="fas fa-at me-2"></i>
+                        Username
+                    </label>
+                    <input type="text" id="username" class="form-control" 
+                           value="{{ user.username }}" disabled>
+                    <div class="form-help">
+                        <i class="fas fa-lock me-1"></i> Username cannot be changed
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">
+                        <i class="fas fa-envelope me-2"></i>
+                        Email Address
+                    </label>
+                    <input type="email" id="email" class="form-control" 
+                           value="{{ user.email }}" disabled>
+                    <div class="form-help">
+                        <i class="fas fa-lock me-1"></i> Contact support to change email
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-submit">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Update Personal Info
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Wallet Addresses -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-wallet me-2"></i>
+                Wallet Addresses
+            </h2>
+            <small class="text-muted">Update your cryptocurrency addresses</small>
+        </div>
+        
+        <form method="POST" action="{% url 'dashboard:profile' %}" class="wallet-form">
+            {% csrf_token %}
+            <input type="hidden" name="update_wallets" value="true">
+            
+            <div class="wallet-grid">
+                <div class="wallet-item">
+                    <div class="wallet-header">
+                        <div class="wallet-icon btc">
+                            <i class="fab fa-bitcoin"></i>
+                        </div>
+                        <div class="wallet-info">
+                            <div class="wallet-name">Bitcoin</div>
+                            <div class="wallet-symbol">BTC</div>
+                        </div>
+                    </div>
+                    <div class="wallet-input">
+                        <input type="text" id="bitcoin_address" name="bitcoin_address" 
+                               class="form-control" value="{{ user.bitcoin_address|default:'' }}"
+                               placeholder="Enter your Bitcoin address">
+                        <button type="button" class="btn-icon copy-btn" onclick="copyAddress('bitcoin_address')">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="wallet-item">
+                    <div class="wallet-header">
+                        <div class="wallet-icon eth">
+                            <i class="fab fa-ethereum"></i>
+                        </div>
+                        <div class="wallet-info">
+                            <div class="wallet-name">Ethereum</div>
+                            <div class="wallet-symbol">ETH</div>
+                        </div>
+                    </div>
+                    <div class="wallet-input">
+                        <input type="text" id="ethereum_address" name="ethereum_address" 
+                               class="form-control" value="{{ user.ethereum_address|default:'' }}"
+                               placeholder="Enter your Ethereum address">
+                        <button type="button" class="btn-icon copy-btn" onclick="copyAddress('ethereum_address')">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="wallet-item">
+                    <div class="wallet-header">
+                        <div class="wallet-icon trx">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div class="wallet-info">
+                            <div class="wallet-name">TRON</div>
+                            <div class="wallet-symbol">TRX</div>
+                        </div>
+                    </div>
+                    <div class="wallet-input">
+                        <input type="text" id="trx_address" name="trx_address" 
+                               class="form-control" value="{{ user.trx_address|default:'' }}"
+                               placeholder="Enter your TRX address">
+                        <button type="button" class="btn-icon copy-btn" onclick="copyAddress('trx_address')">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="wallet-item">
+                    <div class="wallet-header">
+                        <div class="wallet-icon usdt">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="wallet-info">
+                            <div class="wallet-name">USDT</div>
+                            <div class="wallet-symbol">USDT</div>
+                        </div>
+                    </div>
+                    <div class="wallet-input">
+                        <input type="text" id="usdt_address" name="usdt_address" 
+                               class="form-control" value="{{ user.usdt_address|default:'' }}"
+                               placeholder="Enter your USDT address">
+                        <button type="button" class="btn-icon copy-btn" onclick="copyAddress('usdt_address')">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-submit">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Update Wallet Addresses
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Account Security -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-shield-alt me-2"></i>
+                Account Security
+            </h2>
+            <small class="text-muted">Manage your account security settings</small>
+        </div>
+        
+        <div class="security-grid">
+            <div class="security-item">
+                <div class="security-icon">
+                    <i class="fas fa-key"></i>
+                </div>
+                <div class="security-content">
+                    <h4>Change Password</h4>
+                    <p>Update your account password regularly for better security</p>
+                </div>
+                <button class="btn btn-secondary" onclick="openPasswordModal()">
+                    <i class="fas fa-edit me-2"></i>Change
+                </button>
+            </div>
+            
+            <div class="security-item">
+                <div class="security-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <div class="security-content">
+                    <h4>Two-Factor Authentication</h4>
+                    <p>Add an extra layer of security to your account (Coming Soon)</p>
+                </div>
+                <span class="badge badge-coming">Coming Soon</span>
+            </div>
+            
+            <div class="security-item">
+                <div class="security-icon">
+                    <i class="fas fa-history"></i>
+                </div>
+                <div class="security-content">
+                    <h4>Login History</h4>
+                    <p>View recent login activity and devices</p>
+                </div>
+                <button class="btn btn-secondary" onclick="viewLoginHistory()">
+                    <i class="fas fa-eye me-2"></i>View
+                </button>
+            </div>
+            
+            <div class="security-item">
+                <div class="security-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="security-content">
+                    <h4>Notifications</h4>
+                    <p>Manage your email and notification preferences</p>
+                </div>
+                <button class="btn btn-secondary" onclick="manageNotifications()">
+                    <i class="fas fa-cog me-2"></i>Manage
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Account Status -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-chart-line me-2"></i>
+                Account Status
+            </h2>
+        </div>
+        
+        <div class="status-grid">
+            <div class="status-item">
+                <div class="status-icon verified">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="status-content">
+                    <h4>Email Verification</h4>
+                    <p>
+                        {% if user.email_verified %}
+                        <span class="text-success">Verified</span>
+                        {% else %}
+                        <span class="text-warning">Pending</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <button class="btn btn-secondary btn-sm">
+                    <i class="fas fa-envelope me-1"></i>
+                    {% if user.email_verified %}Re-send{% else %}Verify{% endif %}
+                </button>
+            </div>
+            
+            <div class="status-item">
+                <div class="status-icon active">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="status-content">
+                    <h4>Account Status</h4>
+                    <p><span class="text-success">Active</span></p>
+                </div>
+                <span class="badge status-active">Active</span>
+            </div>
+            
+            <div class="status-item">
+                <div class="status-icon member">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <div class="status-content">
+                    <h4>Member Level</h4>
+                    <p>Standard Member</p>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="viewMembership()">
+                    <i class="fas fa-arrow-up me-1"></i>Upgrade
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Password Modal -->
+<div id="passwordModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Change Password</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="passwordForm" class="password-form">
+                <div class="form-group">
+                    <label for="current_password">
+                        <i class="fas fa-lock me-2"></i>
+                        Current Password
+                    </label>
+                    <input type="password" id="current_password" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="new_password">
+                        <i class="fas fa-key me-2"></i>
+                        New Password
+                    </label>
+                    <input type="password" id="new_password" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">
+                        <i class="fas fa-key me-2"></i>
+                        Confirm New Password
+                    </label>
+                    <input type="password" id="confirm_password" class="form-control" required>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Update Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Modal functions
+function openModal(modalId) {
+    document.getElementById(modalId).style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('passwordModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        closeModal();
+    }
+};
+
+// Open password modal
+function openPasswordModal() {
+    document.getElementById('passwordModal').style.display = 'flex';
+}
+
+// Copy wallet address
+function copyAddress(inputId) {
+    const input = document.getElementById(inputId);
+    const button = event.target.closest('.copy-btn');
+    
+    if (input.value.trim()) {
+        navigator.clipboard.writeText(input.value).then(() => {
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i>';
+            button.classList.add('copied');
+            
+            setTimeout(() => {
+                button.innerHTML = originalHTML;
+                button.classList.remove('copied');
+            }, 2000);
+        }).catch(err => {
+            alert('Failed to copy address. Please copy manually.');
+        });
+    } else {
+        input.focus();
+    }
+}
+
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordForm = document.getElementById('passwordForm');
+    
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('current_password').value;
+            const newPassword = document.getElementById('new_password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            
+            // Simple validation
+            if (newPassword !== confirmPassword) {
+                alert('New passwords do not match!');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                alert('Password must be at least 6 characters long!');
+                return;
+            }
+            
+            // In a real app, you would submit to the server here
+            alert('Password change request submitted successfully!');
+            closeModal();
+        });
+    }
+    
+    // Enable form submission buttons
+    const forms = document.querySelectorAll('.profile-form, .wallet-form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function() {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+                submitBtn.disabled = true;
+            }
+        });
+    });
+});
+
+// Placeholder functions for security features
+function viewLoginHistory() {
+    alert('Login history feature coming soon!');
+}
+
+function manageNotifications() {
+    alert('Notification settings feature coming soon!');
+}
+
+function viewMembership() {
+    alert('Membership upgrade feature coming soon!');
+}
+</script>
+
+<style>
+/* Profile Page Specific Styles */
+
+/* Content Header */
+.profile-summary {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-top: 2rem;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.5rem;
+    font-weight: 700;
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.profile-details {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.detail-item i {
+    color: var(--primary-color);
+    width: 16px;
+}
+
+/* Messages */
+.messages-container {
+    margin-bottom: 2rem;
+}
+
+.alert {
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+    border: 1px solid;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    backdrop-filter: blur(10px);
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: var(--success-color);
+}
+
+.alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: var(--danger-color);
+}
+
+.alert-info {
+    background: rgba(14, 165, 233, 0.1);
+    border-color: rgba(14, 165, 233, 0.3);
+    color: var(--info-color);
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Form Grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all var(--transition-fast);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.form-control:disabled {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(148, 163, 184, 0.1);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.form-help {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-submit {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.form-submit .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Wallet Grid */
+.wallet-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.wallet-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    transition: all var(--transition-normal);
+}
+
+.wallet-item:hover {
+    border-color: rgba(148, 163, 184, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.wallet-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.wallet-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.wallet-icon.btc {
+    background: linear-gradient(135deg, #f7931a, #ff9900);
+}
+
+.wallet-icon.eth {
+    background: linear-gradient(135deg, #627eea, #8a92b2);
+}
+
+.wallet-icon.trx {
+    background: linear-gradient(135deg, #ff060a, #ff2d55);
+}
+
+.wallet-icon.usdt {
+    background: linear-gradient(135deg, #26a17b, #50af95);
+}
+
+.wallet-info {
+    flex: 1;
+}
+
+.wallet-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1.125rem;
+    margin-bottom: 0.25rem;
+}
+
+.wallet-symbol {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.wallet-input {
+    position: relative;
+}
+
+.wallet-input .form-control {
+    padding-right: 3rem;
+}
+
+.wallet-input .copy-btn {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.wallet-input .copy-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.wallet-input .copy-btn.copied {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+/* Security Grid */
+.security-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.security-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-normal);
+}
+
+.security-item:hover {
+    border-color: rgba(148, 163, 184, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateX(5px);
+}
+
+.security-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.security-content {
+    flex: 1;
+}
+
+.security-content h4 {
+    color: var(--text-primary);
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.security-content p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.security-item .btn {
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+}
+
+.badge-coming {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning-color);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+/* Status Grid */
+.status-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+}
+
+.status-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.status-icon.verified {
+    background: linear-gradient(135deg, var(--success-color), #10b981);
+}
+
+.status-icon.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+}
+
+.status-icon.member {
+    background: linear-gradient(135deg, var(--warning-color), #f59e0b);
+}
+
+.status-content {
+    flex: 1;
+}
+
+.status-content h4 {
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.status-content p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.text-success {
+    color: var(--success-color) !important;
+}
+
+.text-warning {
+    color: var(--warning-color) !important;
+}
+
+.status-item .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.status-active {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    padding: 0.375rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal-content {
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.modal-header h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+.password-form {
+    padding: 1rem 0;
+}
+
+.password-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.modal-actions .btn {
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-grid,
+    .wallet-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .profile-summary {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+    
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        font-size: 2rem;
+    }
+    
+    .profile-name {
+        font-size: 1.5rem;
+        text-align: center;
+    }
+    
+    .profile-details {
+        justify-content: center;
+    }
+    
+    .security-item,
+    .status-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .security-content,
+    .status-content {
+        text-align: center;
+    }
+    
+    .modal-content {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .content-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .profile-details {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .dashboard-section {
+        padding: 1.25rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.25rem;
+    }
+    
+    .form-group label {
+        font-size: 0.9rem;
+    }
+    
+    .form-control {
+        padding: 0.75rem;
+        font-size: 0.95rem;
+    }
+    
+    .security-item .btn,
+    .status-item .btn-sm {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}

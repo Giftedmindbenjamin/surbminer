@@ -1,0 +1,997 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}User Details - {{ user.username }} - Minersurb{% endblock %}
+
+{% block admin_content %}
+<!-- Landing page background overlay -->
+<div class="landing-page-overlay"></div>
+
+<!-- Content Header -->
+<div class="content-header">
+    <div class="header-content">
+        <h1>User Details</h1>
+        <p>Complete information for {{ user.username }}</p>
+        <div class="user-actions">
+            <a href="{% url 'admin:core_user_change' user.id %}" class="btn btn-primary" target="_blank">
+                <i class="fas fa-edit me-2"></i>Edit User
+            </a>
+            <a href="{% url 'admin_panel:user_management' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Users
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- User Profile Summary -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-user-circle me-2"></i>
+            Profile Information
+        </h2>
+    </div>
+    
+    <div class="profile-details-grid">
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar-large">
+                    {{ user.username|first|upper }}
+                </div>
+                <div class="profile-title">
+                    <h3>{{ user.username }}</h3>
+                    <p>{{ user.email }}</p>
+                </div>
+            </div>
+            
+            <div class="profile-info">
+                <div class="info-item">
+                    <div class="info-label">Full Name</div>
+                    <div class="info-value">{{ user.full_name|default:"Not set" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Account Status</div>
+                    <div class="info-value">
+                        {% if user.is_active %}
+                        <span class="badge status-active">Active</span>
+                        {% else %}
+                        <span class="badge status-inactive">Inactive</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Email Verified</div>
+                    <div class="info-value">
+                        {% if user.is_active %}
+                        <span class="badge status-active">Verified</span>
+                        {% else %}
+                        <span class="badge status-inactive">Not Verified</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Date Joined</div>
+                    <div class="info-value">{{ user.date_joined|date:"F j, Y" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Last Login</div>
+                    <div class="info-value">{{ user.last_login|date:"F j, Y, g:i A" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Referral Code</div>
+                    <div class="info-value">{{ user.referral_code }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Referred By</div>
+                    <div class="info-value">
+                        {% if user.referred_by %}
+                        <a href="{% url 'admin_panel:user_detail' user.referred_by.id %}" class="text-primary">
+                            {{ user.referred_by.username }}
+                        </a>
+                        {% else %}
+                        None
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="balance-card">
+            <div class="balance-header">
+                <h3><i class="fas fa-wallet me-2"></i>Balance Summary</h3>
+            </div>
+            
+            <div class="balance-stats">
+                <div class="balance-item">
+                    <div class="balance-label">Account Balance</div>
+                    <div class="balance-value">${{ user.account_balance|floatformat:2 }}</div>
+                    <div class="balance-description">Available for withdrawal</div>
+                </div>
+                <div class="balance-item">
+                    <div class="balance-label">Active Balance</div>
+                    <div class="balance-value">${{ user.active_balance|floatformat:2 }}</div>
+                    <div class="balance-description">Invested in plans</div>
+                </div>
+                <div class="balance-item">
+                    <div class="balance-label">Total Earnings</div>
+                    <div class="balance-value">${{ user.total_earnings|floatformat:2 }}</div>
+                    <div class="balance-description">All-time profit</div>
+                </div>
+                <div class="balance-item">
+                    <div class="balance-label">Referral Earnings</div>
+                    <div class="balance-value">${{ user.referral_earnings|floatformat:2 }}</div>
+                    <div class="balance-description">From referrals</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Wallet Addresses -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-wallet me-2"></i>
+            Wallet Addresses
+        </h2>
+    </div>
+    
+    <div class="wallets-grid">
+        {% if user.bitcoin_address %}
+        <div class="wallet-card">
+            <div class="wallet-header">
+                <div class="wallet-icon btc">
+                    <i class="fab fa-bitcoin"></i>
+                </div>
+                <div class="wallet-info">
+                    <div class="wallet-name">Bitcoin</div>
+                    <div class="wallet-symbol">BTC</div>
+                </div>
+            </div>
+            <div class="wallet-address">{{ user.bitcoin_address }}</div>
+        </div>
+        {% endif %}
+        
+        {% if user.ethereum_address %}
+        <div class="wallet-card">
+            <div class="wallet-header">
+                <div class="wallet-icon eth">
+                    <i class="fab fa-ethereum"></i>
+                </div>
+                <div class="wallet-info">
+                    <div class="wallet-name">Ethereum</div>
+                    <div class="wallet-symbol">ETH</div>
+                </div>
+            </div>
+            <div class="wallet-address">{{ user.ethereum_address }}</div>
+        </div>
+        {% endif %}
+        
+        {% if user.trx_address %}
+        <div class="wallet-card">
+            <div class="wallet-header">
+                <div class="wallet-icon trx">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div class="wallet-info">
+                    <div class="wallet-name">TRON</div>
+                    <div class="wallet-symbol">TRX</div>
+                </div>
+            </div>
+            <div class="wallet-address">{{ user.trx_address }}</div>
+        </div>
+        {% endif %}
+        
+        {% if user.usdt_address %}
+        <div class="wallet-card">
+            <div class="wallet-header">
+                <div class="wallet-icon usdt">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="wallet-info">
+                    <div class="wallet-name">USDT</div>
+                    <div class="wallet-symbol">USDT</div>
+                </div>
+            </div>
+            <div class="wallet-address">{{ user.usdt_address }}</div>
+        </div>
+        {% endif %}
+        
+        {% if not user.bitcoin_address and not user.ethereum_address and not user.trx_address and not user.usdt_address %}
+        <div class="empty-state-sm">
+            <i class="fas fa-wallet"></i>
+            <p>No wallet addresses set</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- User Activities Tabs -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-history me-2"></i>
+            User Activities
+        </h2>
+    </div>
+    
+    <div class="tabs-container">
+        <div class="tabs-header">
+            <button class="tab-btn active" data-tab="deposits">Deposits ({{ deposits|length }})</button>
+            <button class="tab-btn" data-tab="withdrawals">Withdrawals ({{ withdrawals|length }})</button>
+            <button class="tab-btn" data-tab="investments">Investments ({{ investments|length }})</button>
+            <button class="tab-btn" data-tab="referrals">Referrals ({{ referrals|length }})</button>
+        </div>
+        
+        <div class="tabs-content">
+            <!-- Deposits Tab -->
+            <div class="tab-pane active" id="deposits">
+                {% if deposits %}
+                <div class="table-container">
+                    <div class="table-responsive">
+                        <table class="dashboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Amount</th>
+                                    <th>Crypto</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for deposit in deposits %}
+                                <tr>
+                                    <td class="amount">${{ deposit.amount }}</td>
+                                    <td>
+                                        <span class="crypto-badge {{ deposit.crypto_type|lower }}">
+                                            {{ deposit.crypto_type }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge status-{{ deposit.status|lower }}">
+                                            {{ deposit.status|title }}
+                                        </span>
+                                    </td>
+                                    <td class="date">{{ deposit.created_at|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        {% if deposit.status == 'PENDING' %}
+                                        <div class="action-buttons">
+                                            <a href="{% url 'admin_panel:approve_deposit' deposit.id %}" class="btn-icon btn-icon-success" title="Approve">
+                                                <i class="fas fa-check"></i>
+                                            </a>
+                                            <a href="{% url 'admin_panel:cancel_deposit' deposit.id %}" class="btn-icon btn-icon-warning" title="Cancel">
+                                                <i class="fas fa-times"></i>
+                                            </a>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state-sm">
+                    <i class="fas fa-inbox"></i>
+                    <p>No deposits yet</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Withdrawals Tab -->
+            <div class="tab-pane" id="withdrawals">
+                {% if withdrawals %}
+                <div class="table-container">
+                    <div class="table-responsive">
+                        <table class="dashboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Amount</th>
+                                    <th>Crypto</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for withdrawal in withdrawals %}
+                                <tr>
+                                    <td class="amount">${{ withdrawal.amount }}</td>
+                                    <td>
+                                        <span class="crypto-badge {{ withdrawal.crypto_type|lower }}">
+                                            {{ withdrawal.crypto_type }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge status-{{ withdrawal.status|lower }}">
+                                            {{ withdrawal.status|title }}
+                                        </span>
+                                    </td>
+                                    <td class="date">{{ withdrawal.created_at|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        {% if withdrawal.status == 'PENDING' %}
+                                        <div class="action-buttons">
+                                            <a href="{% url 'admin_panel:approve_withdrawal' withdrawal.id %}" class="btn-icon btn-icon-success" title="Approve">
+                                                <i class="fas fa-check"></i>
+                                            </a>
+                                            <a href="{% url 'admin_panel:cancel_withdrawal' withdrawal.id %}" class="btn-icon btn-icon-warning" title="Cancel">
+                                                <i class="fas fa-times"></i>
+                                            </a>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state-sm">
+                    <i class="fas fa-inbox"></i>
+                    <p>No withdrawals yet</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Investments Tab -->
+            <div class="tab-pane" id="investments">
+                {% if investments %}
+                <div class="table-container">
+                    <div class="table-responsive">
+                        <table class="dashboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Plan</th>
+                                    <th>Amount</th>
+                                    <th>Daily Profit</th>
+                                    <th>Status</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for investment in investments %}
+                                <tr>
+                                    <td>
+                                        <div class="plan-info">
+                                            <div class="plan-icon">
+                                                <i class="fas fa-box"></i>
+                                            </div>
+                                            <div class="plan-details">
+                                                <strong>{{ investment.plan.name }}</strong>
+                                                <small>{{ investment.plan.daily_percentage }}% daily</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="amount">${{ investment.amount }}</td>
+                                    <td class="profit">${{ investment.daily_profit }}</td>
+                                    <td>
+                                        <span class="badge status-{{ investment.status|lower }}">
+                                            {{ investment.status|title }}
+                                        </span>
+                                    </td>
+                                    <td class="date">{{ investment.start_date|date:"M d, Y" }}</td>
+                                    <td class="date">{{ investment.end_date|date:"M d, Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state-sm">
+                    <i class="fas fa-chart-line"></i>
+                    <p>No investments yet</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Referrals Tab -->
+            <div class="tab-pane" id="referrals">
+                {% if referrals %}
+                <div class="table-container">
+                    <div class="table-responsive">
+                        <table class="dashboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Joined</th>
+                                    <th>Commission</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for referral in referrals %}
+                                <tr>
+                                    <td>
+                                        <div class="user-info-cell">
+                                            <div class="user-avatar-small">{{ referral.username|first|upper }}</div>
+                                            <div class="user-details">
+                                                <div class="user-name">{{ referral.username }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="email">{{ referral.email }}</td>
+                                    <td>
+                                        {% if referral.is_active %}
+                                        <span class="badge status-active">Active</span>
+                                        {% else %}
+                                        <span class="badge status-inactive">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="date">{{ referral.date_joined|date:"M d, Y" }}</td>
+                                    <td class="amount">
+                                        {% with referral.deposits.first as first_deposit %}
+                                            {% if first_deposit %}
+                                                ${{ first_deposit.amount|floatformat:2 }}
+                                            {% else %}
+                                                $0.00
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state-sm">
+                    <i class="fas fa-users"></i>
+                    <p>No referrals yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Account Actions -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-cogs me-2"></i>
+            Account Actions
+        </h2>
+    </div>
+    
+    <div class="account-actions">
+        <div class="action-group">
+            <h4>User Management</h4>
+            <div class="action-buttons">
+                <a href="{% url 'admin:core_user_change' user.id %}" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-edit me-2"></i>Edit User Profile
+                </a>
+                {% if user.is_active %}
+                <a href="{% url 'admin:core_user_change' user.id %}" class="btn btn-warning" target="_blank">
+                    <i class="fas fa-user-slash me-2"></i>Deactivate Account
+                </a>
+                {% else %}
+                <a href="{% url 'admin:core_user_change' user.id %}" class="btn btn-success" target="_blank">
+                    <i class="fas fa-user-check me-2"></i>Activate Account
+                </a>
+                {% endif %}
+                <a href="{% url 'admin:auth_user_password_change' user.id %}" class="btn btn-secondary" target="_blank">
+                    <i class="fas fa-key me-2"></i>Reset Password
+                </a>
+            </div>
+        </div>
+        
+        <div class="action-group">
+            <h4>Financial Actions</h4>
+            <div class="action-buttons">
+                <a href="#" class="btn btn-info">
+                    <i class="fas fa-plus-circle me-2"></i>Add Funds
+                </a>
+                <a href="#" class="btn btn-info">
+                    <i class="fas fa-minus-circle me-2"></i>Deduct Funds
+                </a>
+                <a href="#" class="btn btn-info">
+                    <i class="fas fa-gift me-2"></i>Add Bonus
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab functionality
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remove active class from all buttons and panes
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabPanes.forEach(p => p.classList.remove('active'));
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            // Show corresponding tab pane
+            const tabId = this.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+    
+    // Copy wallet addresses
+    const walletAddresses = document.querySelectorAll('.wallet-address');
+    walletAddresses.forEach(address => {
+        address.addEventListener('click', function() {
+            const text = this.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = this.textContent;
+                this.textContent = 'Copied!';
+                this.style.color = 'var(--success-color)';
+                
+                setTimeout(() => {
+                    this.textContent = originalText;
+                    this.style.color = '';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        });
+    });
+});
+</script>
+
+<style>
+/* User Details Specific Styles */
+.user-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.user-actions .btn {
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-warning {
+    background: var(--warning-color);
+    color: white;
+    border: 1px solid var(--warning-color);
+}
+
+.btn-warning:hover {
+    background: #d97706;
+    border-color: #d97706;
+}
+
+.btn-success {
+    background: var(--success-color);
+    color: white;
+    border: 1px solid var(--success-color);
+}
+
+.btn-success:hover {
+    background: #059669;
+    border-color: #059669;
+}
+
+.btn-info {
+    background: var(--info-color);
+    color: white;
+    border: 1px solid var(--info-color);
+}
+
+.btn-info:hover {
+    background: #0284c7;
+    border-color: #0284c7;
+}
+
+/* Profile Details Grid */
+.profile-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.profile-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.profile-avatar-large {
+    width: 80px;
+    height: 80px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    font-weight: 700;
+    border: 4px solid rgba(255, 255, 255, 0.2);
+}
+
+.profile-title h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem 0;
+}
+
+.profile-title p {
+    color: var(--text-muted);
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.info-label {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.info-value {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 0.95rem;
+    text-align: right;
+}
+
+/* Balance Card */
+.balance-card {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+}
+
+.balance-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.balance-header h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.balance-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.balance-item {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.balance-label {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.balance-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.balance-description {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+/* Wallets Grid */
+.wallets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.wallet-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    transition: all var(--transition-normal);
+}
+
+.wallet-card:hover {
+    border-color: rgba(148, 163, 184, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.wallet-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.wallet-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.wallet-icon.btc {
+    background: linear-gradient(135deg, #f7931a, #ff9900);
+}
+
+.wallet-icon.eth {
+    background: linear-gradient(135deg, #627eea, #8a92b2);
+}
+
+.wallet-icon.trx {
+    background: linear-gradient(135deg, #ff060a, #ff2d55);
+}
+
+.wallet-icon.usdt {
+    background: linear-gradient(135deg, #26a17b, #50af95);
+}
+
+.wallet-info {
+    flex: 1;
+}
+
+.wallet-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1.125rem;
+    margin-bottom: 0.25rem;
+}
+
+.wallet-symbol {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.wallet-address {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    word-break: break-all;
+    padding: 0.75rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.wallet-address:hover {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Tabs */
+.tabs-container {
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    overflow: hidden;
+}
+
+.tabs-header {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    overflow-x: auto;
+}
+
+.tab-btn {
+    padding: 1rem 1.5rem;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.tabs-content {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.tab-pane {
+    padding: 1.5rem;
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* Account Actions */
+.account-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.action-group {
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+}
+
+.action-group h4 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.action-group .action-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.action-group .btn {
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 200px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .profile-details-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-group .btn {
+        min-width: 150px;
+    }
+}
+
+@media (max-width: 768px) {
+    .user-actions {
+        flex-direction: column;
+    }
+    
+    .user-actions .btn {
+        width: 100%;
+    }
+    
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .tabs-header {
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        min-width: 120px;
+        text-align: center;
+        padding: 0.875rem 1rem;
+    }
+    
+    .action-group .btn {
+        width: 100%;
+        min-width: 0;
+    }
+    
+    /* Hide less important columns on mobile */
+    .dashboard-table th:nth-child(3),
+    .dashboard-table td:nth-child(3),
+    .dashboard-table th:nth-child(4),
+    .dashboard-table td:nth-child(4) {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .content-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .profile-card,
+    .balance-card {
+        padding: 1.25rem;
+    }
+    
+    .balance-value {
+        font-size: 1.5rem;
+    }
+    
+    .wallets-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .wallet-card {
+        padding: 1rem;
+    }
+    
+    .tab-pane {
+        padding: 1rem;
+    }
+    
+    .action-group {
+        padding: 1.25rem;
+    }
+}
+</style>
+{% endblock %}

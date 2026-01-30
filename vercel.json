@@ -1,0 +1,32 @@
+{
+  "builds": [
+    {
+      "src": "api/**/*.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "minersurb/wsgi.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/cron/cleanup",
+      "dest": "/api/cron/cleanup.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/minersurb/wsgi.py"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/cleanup",
+      "schedule": "0 1 * * *",
+      "description": "Daily cleanup at 1AM UTC"
+    }
+  ],
+  "env": {
+    "PYTHONPATH": "/var/task:/var/task/minersurb"
+  }
+}

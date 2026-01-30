@@ -1,0 +1,1800 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* Hero section enhancements */
+    .hero {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .hero__content--first {
+        animation: fadeInUp 1s ease;
+    }
+    
+    .hero__content--second {
+        animation: fadeInUp 1s ease 0.3s both;
+    }
+    
+    /* Plan highlighting */
+    .popular-plan {
+        position: relative;
+        border: 2px solid var(--primary-color) !important;
+        transform: scale(1.05);
+        box-shadow: 
+            0 20px 40px rgba(102, 126, 234, 0.3),
+            0 0 60px rgba(102, 126, 234, 0.1) !important;
+    }
+    
+    .popular-badge {
+        position: absolute;
+        top: -10px;
+        right: 20px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 5px 15px;
+        border-radius: var(--radius-full);
+        font-size: 12px;
+        font-weight: 600;
+        z-index: 1;
+    }
+    
+    /* Animation keyframes */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Crypto Image Styles */
+    .crypto-image {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+        flex-shrink: 0;
+    }
+    
+    .crypto-image-large {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .signal-card__image {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        flex-shrink: 0;
+    }
+    
+    .crypto-logo-fallback {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+    
+    .crypto-info-with-image {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    /* Market snapshot with images */
+    .market-snapshot-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 20px;
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Signal card with image */
+    .signal-card__header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+    
+    /* Expanded view images */
+    .crypto-grid-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .crypto-grid-item:last-child {
+        border-bottom: none;
+    }
+    
+    .d-flex.align-items-center.gap-2 {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+    }
+    
+    /* Fix for About section mobile overlay */
+    @media (max-width: 768px) {
+        .about-image-overlay {
+            position: relative !important;
+            background: transparent !important;
+            backdrop-filter: none !important;
+            padding: 15px 0 0 0 !important;
+        }
+        
+        .about-stats {
+            position: relative !important;
+            top: 0 !important;
+            background: rgba(255, 255, 255, 0.03) !important;
+            padding: 15px !important;
+            border-radius: var(--radius-lg) !important;
+            border: 1px solid var(--border-color) !important;
+            margin-top: 15px !important;
+        }
+        
+        .about-stat {
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Prominent Register/Login Section -->
+<section class="auth-cta-section">
+    <div class="container">
+        <div class="auth-cta glass-card">
+            <div class="row align-items-center">
+                <div class="col-12 col-md-8">
+                    <h2 class="auth-cta__title">Start Your Crypto Investment Journey Today</h2>
+                    <p class="auth-cta__subtitle">Join thousands of investors earning daily profits with Minersurb</p>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="auth-cta__buttons">
+                        {% if not user.is_authenticated %}
+                        <a href="{% url 'core:signup' %}" class="auth-cta__btn auth-cta__btn--register">
+                            <i class="fas fa-user-plus me-2"></i>Register Free
+                        </a>
+                        <a href="{% url 'core:login' %}" class="auth-cta__btn auth-cta__btn--login">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                        {% else %}
+                        <a href="{% url 'dashboard:overview' %}" class="auth-cta__btn auth-cta__btn--dashboard">
+                            <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Live Crypto Market Snapshot -->
+<div class="market-snapshot">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="market-status">
+                <span class="market-indicator market-indicator--live"></span>
+                <span class="market-status-text">Live Crypto Market Snapshot</span>
+            </div>
+            <div class="market-controls">
+                <!-- Market controls can be added here if needed -->
+            </div>
+        </div>
+        
+        <div class="market-snapshot-container" style="position: relative; overflow: hidden; margin-top: 10px;">
+            <div class="market-snapshot-track" id="marketTrack">
+                <!-- Live crypto prices will be loaded here -->
+                <div class="market-loading">
+                    <div class="loading-spinner"></div>
+                    <span>Loading live crypto prices...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Moving Testimonials Section -->
+<section class="section testimonials-section">
+    <div class="container">
+        <div class="testimonials-container">
+            <div class="testimonials-track" id="testimonialsTrack">
+                <!-- Testimonials will be loaded via JavaScript -->
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- hero -->
+<section class="hero">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 col-lg-7">
+                <!-- hero first -->
+                <div class="hero__content hero__content--first">
+                   <h1 class="hero__title">
+         <strong>MinerSurb</strong><br>
+                delivering smart, secure crypto investment solutions
+            </h1>
+
+                    
+                    <!-- Modern Trading Badge -->
+                    <div class="modern-badge hover-lift">
+                        <span class="modern-badge__icon">⚡</span>
+                        <span class="modern-badge__text">Prime Services</span>
+                    </div>
+
+                    <div class="hero__btns">
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard:deposit' %}" class="hero__btn modern-btn hover-lift">
+                            <i class="fas fa-rocket me-2"></i>Invest Now
+                        </a>
+                        {% else %}
+                        <a href="{% url 'core:signup' %}" class="hero__btn modern-btn hover-lift">
+                            <i class="fas fa-rocket me-2"></i>Get Started
+                        </a>
+                        {% endif %}
+                        <a href="#plans" class="hero__btn hero__btn--light modern-btn hover-lift">
+                            <i class="fas fa-chart-line me-2"></i>View Plans
+                        </a>
+                    </div>
+
+                    <!-- Register Buttons Section -->
+                    <div class="hero__register mt-4">
+                        {% if not user.is_authenticated %}
+                        <p class="text-muted mb-2" ;>Join thousands of successful investors</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            
+                            <a href="#live" class="hero__btn hero__btn--light modern-btn hover-lift">
+                                <i class="fas fa-chart-bar me-2"></i>Explore Live Market
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <!-- End Register Buttons -->
+                </div>
+                <!-- end hero first -->
+            </div>
+
+            <div class="col-12 col-lg-5">
+                <!-- hero second -->
+                <div class="hero__content hero__content--second">
+                    <!-- CTA -->
+                    <div class="cta modern-cta glass-card">
+                        <div class="cta-header">
+                            <h2 class="cta__title text-gradient">Minersurb Investment</h2>
+                            <span class="live-badge">LIVE</span>
+                        </div>
+                        <p class="cta__text">Enjoy up to 8% daily rewards, <b>and special bonuses,</b> and get instant withdrawal rewards.</p>
+
+                        <!-- Modern Progressbar -->
+                        <div class="progressbar modern-progressbar">
+                            <div class="d-flex justify-content-between mb-2">
+                                <h3 class="progressbar__title">Investors:</h3>
+                                <span class="progress-percentage">85%</span>
+                            </div>
+                            <div class="progress modern-progress" role="progressbar" aria-label="Animated striped"
+                                aria-valuenow="85" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar modern-progress-bar"
+                                    style="width: 85%">
+                                    <span class="progress-animation"></span>
+                                </div>
+                            </div>
+                            <div class="progressbar__values">
+                                <span class="progressbar__value progressbar__value--left">0</span>
+                                <span class="progressbar__value progressbar__value--right">100</span>
+                            </div>
+                        </div>
+                        <!-- end progressbar -->
+                    </div>
+                    <!-- end CTA -->
+                </div>
+                <!-- end hero second -->
+            </div>
+        </div>
+    </div>
+</section>
+<!-- end hero -->
+
+<!-- Live Crypto Statistics -->
+<section class="section modern-trading-signals" id="live">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="modern-signals-widget glass-card">
+                    <div class="modern-signals-widget__header">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-chart-line me-2"></i>
+                            <h3>Live Crypto Statistics</h3>
+                            <span class="live-badge ms-2">LIVE</span>
+                        </div>
+                        <div class="modern-signals-widget__controls">
+                            <div class="signal-filters">
+                                <button class="signal-filter active" data-filter="all">All</button>
+                                <button class="signal-filter" data-filter="top">Top Gainers</button>
+                                <button class="signal-filter" data-filter="losers">Top Losers</button>
+                                <button class="signal-filter" data-filter="volume">High Volume</button>
+                            </div>
+                            <span class="signal-update-time">Updated: <span id="signalTime">Just now</span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="modern-signals-widget__body">
+                        <!-- Crypto Stats Grid -->
+                        <div class="signals-grid" id="cryptoStatsContainer">
+                            <!-- Live crypto stats will be loaded here -->
+                            <div class="signals-loading">
+                                <div class="loading-spinner"></div>
+                                <span>Loading live crypto statistics...</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Market Overview Stats -->
+                        <div class="signals-stats" id="marketOverview">
+                            <div class="signals-stat">
+                                <span class="signals-stat__value" id="marketCap">--</span>
+                                <span class="signals-stat__label">Total Market Cap</span>
+                            </div>
+                            <div class="signals-stat">
+                                <span class="signals-stat__value" id="btcDominance">--</span>
+                                <span class="signals-stat__label">BTC Dominance</span>
+                            </div>
+                            <div class="signals-stat">
+                                <span class="signals-stat__value" id="fearGreed">--</span>
+                                <span class="signals-stat__label">Fear & Greed</span>
+                            </div>
+                            <div class="signals-stat">
+                                <span class="signals-stat__value" id="volume24h">--</span>
+                                <span class="signals-stat__label">24h Volume</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modern-signals-widget__footer">
+                        <div class="market-data-info">
+                            <small class="text-muted">Data updates every 30 seconds</small>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="modern-btn modern-btn--outline" id="exportData">
+                                <i class="fas fa-download me-2"></i>Export
+                            </button>
+                            <a href="{% url 'core:signup' %}" class="modern-btn modern-btn--primary">
+                                <i class="fas fa-user-plus me-2"></i>Register to Trade
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- statistics -->
+<div class="section modern-stats-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="stats modern-stats glass-card hover-lift">
+                    <div class="modern-stats__glow"></div>
+                    <div class="modern-stats__icon">
+                        <i class="fas fa-calendar"></i>
+                    </div>
+                    <span class="stats__value modern-counter">18390</span>
+                    <p class="stats__name">Days on the market</p>
+                    <div class="modern-stats__trend trend-up">
+                        <i class="fas fa-arrow-up"></i> +5.2%
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="stats modern-stats glass-card hover-lift">
+                    <div class="modern-stats__glow"></div>
+                    <div class="modern-stats__icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <span class="stats__value modern-counter">81200</span>
+                    <p class="stats__name">Members</p>
+                    <div class="modern-stats__trend trend-up">
+                        <i class="fas fa-arrow-up"></i> +12.4%
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="stats modern-stats glass-card hover-lift">
+                    <div class="modern-stats__glow"></div>
+                    <div class="modern-stats__icon">
+                        <i class="fas fa-money-bill"></i>
+                    </div>
+                    <span class="stats__value modern-counter">1,250,000</span>
+                    <p class="stats__name">Invested</p>
+                    <div class="modern-stats__trend trend-up">
+                        <i class="fas fa-arrow-up"></i> +8.7%
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="stats modern-stats glass-card hover-lift">
+                    <div class="modern-stats__glow"></div>
+                    <div class="modern-stats__icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <span class="stats__value modern-counter">880,000</span>
+                    <p class="stats__name">Total paid</p>
+                    <div class="modern-stats__trend trend-up">
+                        <i class="fas fa-arrow-up"></i> +6.3%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end statistics -->
+
+<!-- features -->
+<section class="section features-section" id="features">
+    <div class="container">
+        <div class="row">
+            <!-- title -->
+            <div class="col-12 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+                <div class="section__title modern-section-title">
+                    <h2 class="text-gradient">Our features</h2>
+                    <p>Whether you're a beginner or an experienced investor, our platform empowers you to make
+                        informed decisions and achieve investment success.</p>
+                </div>
+            </div>
+            <!-- end title -->
+        </div>
+
+        <div class="row features-grid">
+            <div class="col-12 col-lg-4">
+                <!-- feature -->
+                <div class="feature modern-feature glass-card hover-lift">
+                    <div class="modern-feature__header">
+                        <h3 class="feature__title text-gradient">Safety</h3>
+                        <span class="modern-feature__badge">Level 1</span>
+                    </div>
+                    <p class="feature__text">Advanced security with encrypted transactions and secure wallet storage</p>
+                    
+                    <div class="modern-feature__footer">
+                        <span class="modern-feature__status active">
+                            <i class="fas fa-shield-alt"></i> Active
+                        </span>
+                    </div>
+                </div>
+                <!-- end feature -->
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-4">
+                <!-- feature -->
+                <div class="feature modern-feature glass-card hover-lift">
+                    <div class="modern-feature__header">
+                        <h3 class="feature__title text-gradient">Automatization</h3>
+                        <span class="modern-feature__badge">AI-Powered</span>
+                    </div>
+                    <p class="feature__text">Automatic profit calculations and investment management</p>
+                    
+                    <div class="modern-feature__footer">
+                        <span class="modern-feature__status active">
+                            <i class="fas fa-robot"></i> Automated
+                        </span>
+                    </div>
+                </div>
+                <!-- end feature -->
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-4">
+                <!-- feature -->
+                <div class="feature modern-feature glass-card hover-lift">
+                    <div class="modern-feature__header">
+                        <h3 class="feature__title text-gradient">Analytics</h3>
+                        <span class="modern-feature__badge">Real-time</span>
+                    </div>
+                    <p class="feature__text">Real-time investment performance tracking and detailed analytics</p>
+                    
+                    <div class="modern-feature__footer">
+                        <span class="modern-feature__status active">
+                            <i class="fas fa-chart-line"></i> Live
+                        </span>
+                    </div>
+                </div>
+                <!-- end feature -->
+            </div>
+        </div>
+
+        <!-- Register Call-to-Action after Features -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="text-center glass-card p-4 p-md-5 feature-cta">
+                    <h3 class="mb-3 text-gradient">Ready to Start Your Investment Journey?</h3>
+                    <p class="mb-4">Join Minersurb today and get access to all premium features</p>
+                    {% if not user.is_authenticated %}
+                    <a href="{% url 'core:signup' %}" class="modern-btn hover-lift" style="padding: 1rem 2.5rem; background: var(--gradient-primary);">
+                        <i class="fas fa-rocket me-2"></i>Register Now - It's Free
+                    </a>
+                    {% else %}
+                    <a href="{% url 'dashboard:deposit' %}" class="modern-btn hover-lift" style="padding: 1rem 2.5rem; background: var(--gradient-success);">
+                        <i class="fas fa-chart-line me-2"></i>Start Investing
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- end features -->
+
+<!-- about -->
+<section class="section" id="about">
+    <div class="container">
+        <div class="row align-items-center">
+            <!-- Image Column -->
+            <div class="col-12 col-lg-6">
+                <div class="about-image-container">
+                    <div class="about-image-wrapper glass-card">
+                        <img src="{% static 'img/about-minersurb.png' %}" 
+                             alt="Minersurb Team" 
+                             class="about-image hover-lift">
+                        <div class="about-image-overlay">
+                            <div class="about-stats">
+                                <div class="about-stat">
+                                    <h4 class="about-stat-value">5+</h4>
+                                    <p class="about-stat-label">Years Experience</p>
+                                </div>
+                                <div class="about-stat">
+                                    <h4 class="about-stat-value">99.7%</h4>
+                                    <p class="about-stat-label">Success Rate</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Column -->
+            <div class="col-12 col-lg-6">
+                <div class="about-content">
+                    <div class="section__title modern-section-title text-start">
+                        <h2 class="text-gradient">About Minersurb</h2>
+                        <p>Leading the future of crypto investments with innovation and trust</p>
+                    </div>
+
+                    <div class="about-features">
+                        <div class="about-feature">
+                            <div class="about-feature-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="about-feature-content">
+                                <h4>Secure & Regulated</h4>
+                                <p>Our platform operates with full regulatory compliance, ensuring your investments are protected with enterprise-grade security.</p>
+                            </div>
+                        </div>
+
+                        <div class="about-feature">
+                            <div class="about-feature-icon">
+                                <i class="fas fa-chart-network"></i>
+                            </div>
+                            <div class="about-feature-content">
+                                <h4>Advanced Technology</h4>
+                                <p>We utilize cutting-edge AI algorithms and blockchain technology to optimize your investment returns.</p>
+                            </div>
+                        </div>
+
+                        <div class="about-feature">
+                            <div class="about-feature-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="about-feature-content">
+                                <h4>Expert Team</h4>
+                                <p>Our team of financial analysts and blockchain experts have decades of combined experience in crypto markets.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="about-achievements">
+                        <div class="achievement">
+                            <div class="achievement-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="achievement-content">
+                                <h5>Award Winning Platform</h5>
+                                <p>Recognized as "Best Crypto Investment Platform 2024"</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hero__btns mt-4">
+                        {% if not user.is_authenticated %}
+                        <a href="{% url 'core:signup' %}" class="hero__btn modern-btn hover-lift">
+                            <i class="fas fa-user-plus me-2"></i>Join Now
+                        </a>
+                        {% else %}
+                        <a href="#plans" class="hero__btn modern-btn hover-lift">
+                            <i class="fas fa-rocket me-2"></i>Start Investing
+                        </a>
+                        {% endif %}
+                        <a href="#contact" class="hero__btn hero__btn--light modern-btn hover-lift">
+                            <i class="fas fa-headset me-2"></i>Contact Us
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- end about -->
+
+<!-- investment plans -->
+<section class="section plans-section" id="plans">
+    <div class="container">
+        <div class="row">
+            <!-- title -->
+            <div class="col-12 col-md-10 offset-md-1 col-lg-8 offset-lg-2 col-xl-6 offset-xl-3">
+                <div class="section__title modern-section-title">
+                    <h2 class="text-gradient">Investment Plans</h2>
+                    <p>Choose from our carefully crafted investment plans designed for maximum returns</p>
+                </div>
+            </div>
+            <!-- end title -->
+        </div>
+
+        <div class="row plans-grid">
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="plan-card modern-plan glass-card hover-lift">
+                    <div class="plan-header">
+                        <h3>BASIC PLAN</h3>
+                        <div class="plan-range">$100 – $499.9</div>
+                    </div>
+                    <div class="plan-details">
+                        <div class="daily-profit text-gradient">3% Daily</div>
+                        <div class="plan-duration">For 3 Days</div>
+                    </div>
+                    <div class="plan-action">
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard:deposit' %}" class="btn modern-btn hover-lift">Invest Now</a>
+                        {% else %}
+                        <a href="{% url 'core:signup' %}" class="btn modern-btn hover-lift">Get Started</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="plan-card modern-plan glass-card hover-lift popular-plan">
+                    <div class="popular-badge">MOST POPULAR</div>
+                    <div class="plan-header">
+                        <h3>STANDARD PLAN</h3>
+                        <div class="plan-range">$500 – $4,999</div>
+                    </div>
+                    <div class="plan-details">
+                        <div class="daily-profit text-gradient">4.5% Daily</div>
+                        <div class="plan-duration">For 5 Days</div>
+                    </div>
+                    <div class="plan-action">
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard:deposit' %}" class="btn modern-btn hover-lift">Invest Now</a>
+                        {% else %}
+                        <a href="{% url 'core:signup' %}" class="btn modern-btn hover-lift">Get Started</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="plan-card modern-plan glass-card hover-lift">
+                    <div class="plan-header">
+                        <h3>ADVANCED PLAN</h3>
+                        <div class="plan-range">$5,000 – $14,999</div>
+                    </div>
+                    <div class="plan-details">
+                        <div class="daily-profit text-gradient">6% Daily</div>
+                        <div class="plan-duration">For 7 Days</div>
+                    </div>
+                    <div class="plan-action">
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard:deposit' %}" class="btn modern-btn hover-lift">Invest Now</a>
+                        {% else %}
+                        <a href="{% url 'core:signup' %}" class="btn modern-btn hover-lift">Get Started</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="plan-card modern-plan glass-card hover-lift">
+                    <div class="plan-header">
+                        <h3>PREMIUM PLAN</h3>
+                        <div class="plan-range">$15,000 – Unlimited</div>
+                    </div>
+                    <div class="plan-details">
+                        <div class="daily-profit text-gradient">8% Daily</div>
+                        <div class="plan-duration">For 10 Days</div>
+                    </div>
+                    <div class="plan-action">
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard:deposit' %}" class="btn modern-btn hover-lift">Invest Now</a>
+                        {% else %}
+                        <a href="{% url 'core:signup' %}" class="btn modern-btn hover-lift">Get Started</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plans CTA -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="text-center glass-card p-4 p-md-5">
+                    <h3 class="mb-3 text-gradient">Need Help Choosing a Plan?</h3>
+                    <p class="mb-4">Our investment specialists are ready to help you select the perfect plan for your goals</p>
+                    {% if not user.is_authenticated %}
+                    <div class="d-flex flex-wrap justify-content-center gap-3">
+                        <a href="{% url 'core:signup' %}" class="modern-btn hover-lift" style="background: var(--gradient-primary);">
+                            <i class="fas fa-user-plus me-2"></i>Create Free Account
+                        </a>
+                        <a href="#contact" class="modern-btn hover-lift hero__btn--light">
+                            <i class="fas fa-headset me-2"></i>Consult with Expert
+                        </a>
+                    </div>
+                    {% else %}
+                    <a href="{% url 'dashboard:deposit' %}" class="modern-btn hover-lift" style="background: var(--gradient-success); padding: 1rem 2.5rem;">
+                        <i class="fas fa-wallet me-2"></i>Make Your First Deposit
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- end investment plans -->
+
+<!-- footer -->
+<footer class="footer" id="contact">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 col-sm-8 col-md-6 col-lg-6 col-xl-4 order-1 order-lg-4 order-xl-1">
+                <!-- footer logo -->
+                <div class="footer__logo">
+                    <a href="{% url 'core:landing' %}">
+                        <img src="{% static 'img/logo.png' %}" alt="Minersurb Logo" class="glow">
+                    </a>
+                </div>
+                <!-- end footer logo -->
+
+                <!-- footer tagline -->
+                <p class="footer__tagline">The Minersurb team works hard <br>to deliver exceptional financial results
+                    <br>and increase our clients' revenue.</p>
+                <!-- end footer tagline -->
+
+                <!-- footer currencies -->
+                <div class="footer__currencies">
+                    <i class="fab fa-bitcoin"></i>
+                    <i class="fab fa-ethereum"></i>
+                    <i class="fas fa-coins"></i>
+                    <i class="fab fa-solana"></i>
+                    <i class="fab fa-dogecoin"></i>
+                </div>
+                <!-- end footer currencies -->
+            </div>
+
+            <!-- navigation -->
+            <div class="col-6 col-md-4 col-lg-3 col-xl-2 order-3 order-md-2 order-lg-2 order-xl-3 offset-md-2 offset-lg-0">
+                <h6 class="footer__title">Company</h6>
+                <div class="footer__nav">
+                    <a href="#about" class="hover-lift">About Minersurb</a>
+                    <a href="#contact" class="hover-lift">License</a>
+                    <a href="#contact" class="hover-lift">Contacts</a>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-8 col-lg-6 col-xl-4 order-2 order-md-3 order-lg-1 order-xl-2">
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="footer__title">Services & Features</h6>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="footer__nav">
+                            <a href="#plans" class="hover-lift">Invest</a>
+                            <a href="#features" class="hover-lift">Features</a>
+                            <a href="{% url 'dashboard:referrals' %}" class="hover-lift">Affiliate</a>
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="footer__nav">
+                            <a href="#features" class="hover-lift">Automatization</a>
+                            <a href="#features" class="hover-lift">Analytics</a>
+                            <a href="#contact" class="hover-lift">Support</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-3 col-xl-2 order-4 order-md-4 order-lg-3 order-xl-4">
+                <h6 class="footer__title">Support</h6>
+                <div class="footer__nav">
+                    <a href="mailto:support@minersurb.com" class="hover-lift">support@minersurb.com</a>
+                    <a href="tel:+1234567890" class="hover-lift">+62851-3325-5460</a>
+                    <a href="{% url 'core:landing' %}" class="hover-lift">minersurb.com</a>
+                </div>
+            </div>
+            <!-- end navigation -->
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="footer__content">
+                    <!-- footer social -->
+                    <div class="footer__social">
+                        <a href="#" target="_blank" class="hover-lift"><i class="fab fa-facebook"></i></a>
+                        <a href="#" target="_blank" class="hover-lift"><i class="fab fa-twitter"></i></a>
+                        <a href="#" target="_blank" class="hover-lift"><i class="fab fa-instagram"></i></a>
+                        <a href="#" target="_blank" class="hover-lift"><i class="fab fa-telegram"></i></a>
+                        <a href="#" target="_blank" class="hover-lift"><i class="fab fa-discord"></i></a>
+                    </div>
+                    <!-- end footer social -->
+
+                    <!-- footer copyright -->
+                    <small class="footer__copyright">© Minersurb 2024. All rights reserved.</small>
+                    <!-- end footer copyright -->
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+<!-- end footer -->
+
+<!-- Expanded Market View Modal -->
+<div class="market-expanded-view">
+    <div class="container">
+        <div class="market-expanded-header">
+            <h3>All Crypto Markets</h3>
+            <button class="market-expanded-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="market-expanded-content" id="expandedContent">
+            <!-- Expanded content will be loaded here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Live Crypto Market Data Configuration with Images
+const CONFIG = {
+    API_URL: 'https://api.coingecko.com/api/v3',
+    IMAGE_URL: 'https://assets.coingecko.com/coins/images',
+    UPDATE_INTERVAL: 30000, // 30 seconds
+    CRYPTO_IDS: [
+        'bitcoin', 'ethereum', 'tether', 'tron',
+        'solana', 'cardano', 'ripple', 'polkadot',
+        'dogecoin', 'avalanche-2', 'chainlink',
+        'polygon', 'litecoin', 'cosmos', 'uniswap'
+    ],
+    DISPLAY_NAMES: {
+        'bitcoin': 'Bitcoin',
+        'ethereum': 'Ethereum',
+        'tether': 'Tether',
+        'tron': 'TRON',
+        'solana': 'Solana',
+        'cardano': 'Cardano',
+        'ripple': 'Ripple',
+        'polkadot': 'Polkadot',
+        'dogecoin': 'Dogecoin',
+        'avalanche-2': 'Avalanche',
+        'chainlink': 'Chainlink',
+        'polygon': 'Polygon',
+        'litecoin': 'Litecoin',
+        'cosmos': 'Cosmos',
+        'uniswap': 'Uniswap'
+    },
+    SYMBOLS: {
+        'bitcoin': 'BTC',
+        'ethereum': 'ETH',
+        'tether': 'USDT',
+        'tron': 'TRX',
+        'solana': 'SOL',
+        'cardano': 'ADA',
+        'ripple': 'XRP',
+        'polkadot': 'DOT',
+        'dogecoin': 'DOGE',
+        'avalanche-2': 'AVAX',
+        'chainlink': 'LINK',
+        'polygon': 'MATIC',
+        'litecoin': 'LTC',
+        'cosmos': 'ATOM',
+        'uniswap': 'UNI'
+    },
+    // CoinGecko image IDs mapping
+    IMAGE_IDS: {
+        'bitcoin': 1,
+        'ethereum': 1027,
+        'tether': 825,
+        'tron': 1958,
+        'solana': 16116,
+        'cardano': 2010,
+        'ripple': 52,
+        'polkadot': 6636,
+        'dogecoin': 74,
+        'avalanche-2': 5805,
+        'chainlink': 1975,
+        'polygon': 3890,
+        'litecoin': 2,
+        'cosmos': 3794,
+        'uniswap': 12504
+    },
+    // Image sizes: 'small', 'large', 'thumb'
+    IMAGE_SIZE: {
+        small: '64',
+        large: '128',
+        thumb: '32'
+    }
+};
+
+// Crypto image cache
+const imageCache = new Map();
+
+// State management
+let cryptoData = [];
+let marketStats = {};
+let updateInterval;
+let isMarketPaused = false;
+
+// Initialize everything
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing Minersurb Live Crypto Dashboard...');
+    
+    // Initialize testimonials
+    initializeTestimonials();
+    
+    // Initialize animated counters
+    const counters = document.querySelectorAll('.modern-counter');
+    counters.forEach(counter => {
+        animateCounter(counter);
+    });
+    
+    // Add hover effects to glass cards
+    const glassCards = document.querySelectorAll('.glass-card');
+    glassCards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-5px)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Load live crypto data with images
+    fetchLiveCryptoData();
+    fetchMarketOverview();
+    
+    // Initialize controls
+    initializeMarketControls();
+    initializeFilters();
+    initializeExportData();
+    initializeExpandedView();
+    
+    // Set up auto-refresh
+    setupAutoRefresh();
+});
+
+// Get image URL for crypto
+function getCryptoImageUrl(cryptoId, size = 'thumb') {
+    const imageId = CONFIG.IMAGE_IDS[cryptoId];
+    if (!imageId) {
+        return null;
+    }
+    
+    const sizePx = CONFIG.IMAGE_SIZE[size];
+    return `${CONFIG.IMAGE_URL}/${imageId}/thumb?${sizePx}`;
+}
+
+// Preload crypto images
+async function preloadCryptoImages() {
+    const imagePromises = [];
+    
+    CONFIG.CRYPTO_IDS.forEach(cryptoId => {
+        const imageUrl = getCryptoImageUrl(cryptoId);
+        if (imageUrl) {
+            const img = new Image();
+            img.src = imageUrl;
+            imagePromises.push(new Promise((resolve) => {
+                img.onload = resolve;
+                img.onerror = () => {
+                    console.warn(`Failed to load image for ${cryptoId}`);
+                    resolve();
+                };
+            }));
+        }
+    });
+    
+    await Promise.all(imagePromises);
+    console.log('Crypto images preloaded');
+}
+
+// Fetch live crypto data from CoinGecko
+async function fetchLiveCryptoData() {
+    try {
+        showLoadingState();
+        
+        const ids = CONFIG.CRYPTO_IDS.join(',');
+        const response = await fetch(
+            `${CONFIG.API_URL}/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`
+        );
+        
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        processCryptoData(data);
+        
+        // Preload images after data is loaded
+        preloadCryptoImages();
+        
+    } catch (error) {
+        console.error('Error fetching crypto data:', error);
+        showErrorState('Failed to load crypto data. Retrying...');
+        
+        // Retry after 5 seconds
+        setTimeout(fetchLiveCryptoData, 5000);
+    }
+}
+
+// Process and display crypto data
+function processCryptoData(data) {
+    cryptoData = [];
+    
+    for (const [id, info] of Object.entries(data)) {
+        const crypto = {
+            id: id,
+            name: CONFIG.DISPLAY_NAMES[id] || id.charAt(0).toUpperCase() + id.slice(1),
+            symbol: CONFIG.SYMBOLS[id] || id.substring(0, 3).toUpperCase(),
+            price: info.usd,
+            priceFormatted: formatCurrency(info.usd),
+            change24h: info.usd_24h_change || 0,
+            change24hFormatted: formatPercentage(info.usd_24h_change || 0),
+            marketCap: info.usd_market_cap || 0,
+            volume24h: info.usd_24h_vol || 0,
+            changeType: (info.usd_24h_change || 0) >= 0 ? 'positive' : 'negative',
+            timestamp: new Date().toISOString(),
+            imageUrl: getCryptoImageUrl(id)
+        };
+        
+        cryptoData.push(crypto);
+    }
+    
+    // Sort by market cap (largest first)
+    cryptoData.sort((a, b) => b.marketCap - a.marketCap);
+    
+    // Update displays
+    updateMarketSnapshot();
+    updateCryptoStats();
+    
+    // Show success notification
+    showNotification('Market data updated successfully', 'success');
+    
+    // Update timestamp
+    updateSignalTime();
+}
+
+// Update market snapshot with images
+function updateMarketSnapshot() {
+    const marketTrack = document.getElementById('marketTrack');
+    if (!marketTrack) return;
+    
+    // Clear loading state
+    marketTrack.innerHTML = '';
+    
+    // Create duplicate items for seamless loop
+    const items = [...cryptoData, ...cryptoData, ...cryptoData];
+    
+    items.forEach((crypto, index) => {
+        const item = document.createElement('div');
+        item.className = 'market-snapshot-item';
+        item.style.animationDelay = `${index * 0.5}s`;
+        
+        let imageHtml;
+        if (crypto.imageUrl) {
+            imageHtml = `
+                <img src="${crypto.imageUrl}" 
+                     alt="${crypto.name}" 
+                     class="crypto-image"
+                     loading="lazy"
+                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIgZmlsbD0idXJsKCNncmFkKSIvPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZCIgeDE9IjAiIHkxPSIwIiB4Mj0iMzIiIHkyPSIzMiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzNiODJmNiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzhiNWNmNiIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjwvc3ZnPg=='">
+            `;
+        } else {
+            imageHtml = `<div class="crypto-logo-fallback">${crypto.symbol.charAt(0)}</div>`;
+        }
+        
+        item.innerHTML = `
+            ${imageHtml}
+            <div class="crypto-info">
+                <div class="crypto-name">
+                    <span class="crypto-symbol">${crypto.symbol}</span>
+                    <span class="crypto-fullname">${crypto.name}</span>
+                </div>
+                <div class="crypto-price">
+                    <span class="price-value">${crypto.priceFormatted}</span>
+                    <span class="price-change ${crypto.changeType}">
+                        ${crypto.change24hFormatted}
+                    </span>
+                </div>
+            </div>
+        `;
+        marketTrack.appendChild(item);
+    });
+    
+    // Restart animation
+    marketTrack.style.animation = 'none';
+    setTimeout(() => {
+        marketTrack.style.animation = 'slideLeftToRight 100s linear infinite';
+    }, 10);
+}
+
+// Update market overview statistics
+async function fetchMarketOverview() {
+    try {
+        const response = await fetch(
+            `${CONFIG.API_URL}/global`
+        );
+        
+        if (!response.ok) throw new Error('Market overview fetch failed');
+        
+        const data = await response.json();
+        marketStats = data.data;
+        updateMarketOverview();
+        
+    } catch (error) {
+        console.error('Error fetching market overview:', error);
+        // Use fallback data
+        marketStats = {
+            total_market_cap: { usd: 1650000000000 },
+            market_cap_percentage: { btc: 52.3 },
+            total_volume: { usd: 68200000000 }
+        };
+        updateMarketOverview();
+    }
+}
+
+function updateMarketOverview() {
+    // Update market cap
+    const marketCap = document.getElementById('marketCap');
+    if (marketCap && marketStats.total_market_cap) {
+        const value = marketStats.total_market_cap.usd;
+        marketCap.textContent = formatCurrency(value, true);
+    }
+    
+    // Update BTC dominance
+    const btcDominance = document.getElementById('btcDominance');
+    if (btcDominance && marketStats.market_cap_percentage) {
+        const value = marketStats.market_cap_percentage.btc || 52.3;
+        btcDominance.textContent = `${value.toFixed(1)}%`;
+        
+        // Color code based on dominance
+        btcDominance.className = 'signals-stat__value';
+        if (value > 55) btcDominance.classList.add('signals-stat__value--warning');
+        else if (value < 45) btcDominance.classList.add('signals-stat__value--success');
+        else btcDominance.classList.add('signals-stat__value');
+    }
+    
+    // Update 24h volume
+    const volume24h = document.getElementById('volume24h');
+    if (volume24h && marketStats.total_volume) {
+        const value = marketStats.total_volume.usd;
+        volume24h.textContent = formatCurrency(value, true);
+    }
+    
+    // Generate random Fear & Greed index (simulated)
+    const fearGreed = document.getElementById('fearGreed');
+    if (fearGreed) {
+        // Base value with some randomness
+        const baseValue = 65;
+        const randomChange = Math.floor(Math.random() * 11) - 5;
+        const value = Math.max(0, Math.min(100, baseValue + randomChange));
+        
+        fearGreed.textContent = value;
+        
+        // Color code based on value
+        fearGreed.className = 'signals-stat__value';
+        if (value >= 75) {
+            fearGreed.classList.add('signals-stat__value--success');
+            fearGreed.title = 'Extreme Greed';
+        } else if (value >= 55) {
+            fearGreed.classList.add('signals-stat__value--warning');
+            fearGreed.title = 'Greed';
+        } else if (value >= 45) {
+            fearGreed.classList.add('signals-stat__value');
+            fearGreed.title = 'Neutral';
+        } else if (value >= 25) {
+            fearGreed.classList.add('signals-stat__value--warning');
+            fearGreed.title = 'Fear';
+        } else {
+            fearGreed.classList.add('signals-stat__value--danger');
+            fearGreed.title = 'Extreme Fear';
+        }
+    }
+}
+
+// Create crypto stat card with image
+function createCryptoStatCard(crypto, index) {
+    const card = document.createElement('div');
+    card.className = `signal-card ${crypto.change24h >= 0 ? 'signal-card--buy' : 'signal-card--sell'}`;
+    card.style.animationDelay = `${index * 0.1}s`;
+    
+    // Determine trading signal based on performance
+    let signalType = 'hold';
+    let confidence = '60%';
+    
+    if (Math.abs(crypto.change24h) > 5) {
+        signalType = crypto.change24h > 0 ? 'strong-buy' : 'strong-sell';
+        confidence = '85%';
+    } else if (Math.abs(crypto.change24h) > 2) {
+        signalType = crypto.change24h > 0 ? 'buy' : 'sell';
+        confidence = '75%';
+    }
+    
+    // Format volume
+    const volumeFormatted = formatCurrency(crypto.volume24h, true);
+    
+    // Image HTML
+    let imageHtml;
+    if (crypto.imageUrl) {
+        imageHtml = `
+            <img src="${crypto.imageUrl.replace('thumb?32', 'thumb?64')}" 
+                 alt="${crypto.name}" 
+                 class="signal-card__image"
+                 loading="lazy"
+                 onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0idXJsKCNncmFkKSIvPjx0ZXh0IHg9IjIwIiB5PSIyNiIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjB4PC90ZXh0PjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZCIgeDE9IjAiIHkxPSIwIiB4Mj0iNDAiIHkyPSI0MCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzNiODJmNiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzhiNWNmNiIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjwvc3ZnPg=='">
+        `;
+    } else {
+        imageHtml = `
+            <div class="crypto-logo-fallback" style="width: 40px; height: 40px; font-size: 16px;">
+                ${crypto.symbol.substring(0, 2)}
+            </div>
+        `;
+    }
+    
+    card.innerHTML = `
+        <div class="signal-card__header">
+            <div class="d-flex align-items-center gap-2">
+                ${imageHtml}
+                <div>
+                    <div class="signal-card__pair">${crypto.symbol}/USD</div>
+                    <span class="signal-card__type signal-card__type--${signalType.includes('buy') ? 'buy' : 'sell'}">
+                        ${signalType.toUpperCase().replace('-', ' ')}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="signal-card__body">
+            <div class="signal-card__price">${crypto.priceFormatted}</div>
+            <div class="signal-card__target">
+                <div class="d-flex justify-content-between mb-1">
+                    <span>24h Change:</span>
+                    <span class="${crypto.change24h >= 0 ? 'text-success' : 'text-danger'}">
+                        ${crypto.change24hFormatted}
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>24h Volume:</span>
+                    <span class="text-info">${volumeFormatted}</span>
+                </div>
+            </div>
+        </div>
+        <div class="signal-card__footer">
+            <div class="signal-card__time">${formatTimeAgo(crypto.timestamp)}</div>
+            <div class="signal-confidence ${getConfidenceClass(confidence)}">
+                ${confidence}
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+// Update crypto statistics grid with images
+function updateCryptoStats(filter = 'all') {
+    const container = document.getElementById('cryptoStatsContainer');
+    if (!container) return;
+    
+    // Clear loading state
+    container.innerHTML = '';
+    
+    // Filter data
+    let filteredData = [...cryptoData];
+    
+    switch(filter) {
+        case 'top':
+            filteredData = [...cryptoData]
+                .filter(c => c.change24h > 0)
+                .sort((a, b) => b.change24h - a.change24h)
+                .slice(0, 6);
+            break;
+        case 'losers':
+            filteredData = [...cryptoData]
+                .filter(c => c.change24h < 0)
+                .sort((a, b) => a.change24h - b.change24h)
+                .slice(0, 6);
+            break;
+        case 'volume':
+            filteredData = [...cryptoData]
+                .sort((a, b) => b.volume24h - a.volume24h)
+                .slice(0, 6);
+            break;
+        default:
+            filteredData = cryptoData.slice(0, 6);
+    }
+    
+    // Create stat cards
+    filteredData.forEach((crypto, index) => {
+        const card = createCryptoStatCard(crypto, index);
+        container.appendChild(card);
+    });
+}
+
+// Market controls
+function initializeMarketControls() {
+    const pauseBtn = document.getElementById('pauseMarket');
+    const refreshBtn = document.getElementById('refreshMarket');
+    const marketTrack = document.getElementById('marketTrack');
+    
+    if (pauseBtn && marketTrack) {
+        pauseBtn.addEventListener('click', function() {
+            isMarketPaused = !isMarketPaused;
+            
+            if (isMarketPaused) {
+                marketTrack.style.animationPlayState = 'paused';
+                this.innerHTML = '<i class="fas fa-play"></i>';
+                this.title = 'Play';
+                showNotification('Market ticker paused', 'info');
+            } else {
+                marketTrack.style.animationPlayState = 'running';
+                this.innerHTML = '<i class="fas fa-pause"></i>';
+                this.title = 'Pause';
+                showNotification('Market ticker resumed', 'success');
+            }
+        });
+    }
+    
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            icon.className = 'fas fa-spinner fa-spin';
+            
+            // Fetch new data
+            Promise.all([fetchLiveCryptoData(), fetchMarketOverview()])
+                .then(() => {
+                    icon.className = 'fas fa-sync-alt';
+                    showNotification('Market data refreshed', 'success');
+                })
+                .catch(() => {
+                    icon.className = 'fas fa-sync-alt';
+                    showNotification('Refresh failed', 'error');
+                });
+        });
+    }
+}
+
+// Expanded view
+function initializeExpandedView() {
+    const expandBtn = document.getElementById('expandMarket');
+    const expandedView = document.querySelector('.market-expanded-view');
+    
+    if (expandBtn && expandedView) {
+        expandBtn.addEventListener('click', function() {
+            loadExpandedView();
+            expandedView.classList.add('active');
+        });
+    }
+    
+    const closeBtn = expandedView.querySelector('.market-expanded-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            expandedView.classList.remove('active');
+        });
+    }
+    
+    // Close on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            expandedView.classList.remove('active');
+        }
+    });
+}
+
+// Load expanded view with images
+function loadExpandedView() {
+    const content = document.getElementById('expandedContent');
+    if (!content) return;
+    
+    content.innerHTML = '';
+    
+    cryptoData.forEach(crypto => {
+        const item = document.createElement('div');
+        item.className = 'crypto-grid-item';
+        
+        let imageHtml;
+        if (crypto.imageUrl) {
+            imageHtml = `
+                <img src="${crypto.imageUrl.replace('thumb?32', 'thumb?64')}" 
+                     alt="${crypto.name}" 
+                     class="crypto-image crypto-image-large"
+                     loading="lazy"
+                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyNCIgY3k9IjI0IiByPSIyNCIgZmlsbD0idXJsKCNncmFkKSIvPjx0ZXh0IHg9IjI0IiB5PSIzMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjB4PC90ZXh0PjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZCIgeDE9IjAiIHkxPSIwIiB4Mj0iNDgiIHkyPSI0OCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzNiODJmNiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzhiNWNmNiIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjwvc3ZnPg=='">
+            `;
+        } else {
+            imageHtml = `
+                <div class="crypto-logo-fallback" style="width: 48px; height: 48px; font-size: 18px;">
+                    ${crypto.symbol.substring(0, 2)}
+                </div>
+            `;
+        }
+        
+        item.innerHTML = `
+            ${imageHtml}
+            <div class="crypto-grid-info">
+                <div class="crypto-grid-name">
+                    <span class="crypto-grid-symbol">${crypto.symbol}</span>
+                    <span class="crypto-grid-fullname">${crypto.name}</span>
+                </div>
+                <div class="crypto-grid-price">${crypto.priceFormatted}</div>
+                <div class="crypto-grid-change ${crypto.changeType}">
+                    ${crypto.change24hFormatted}
+                </div>
+            </div>
+        `;
+        content.appendChild(item);
+    });
+}
+
+// Filter functionality
+function initializeFilters() {
+    const filters = document.querySelectorAll('.signal-filter');
+    filters.forEach(filter => {
+        filter.addEventListener('click', function() {
+            filters.forEach(f => f.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filterType = this.getAttribute('data-filter');
+            updateCryptoStats(filterType);
+        });
+    });
+}
+
+// Export functionality
+function initializeExportData() {
+    const exportBtn = document.getElementById('exportData');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exporting...';
+            
+            const csvContent = createCSV();
+            downloadCSV(csvContent, `crypto_data_${new Date().toISOString().split('T')[0]}.csv`);
+            
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-download me-2"></i>Export';
+                showNotification('Data exported successfully', 'success');
+            }, 1000);
+        });
+    }
+}
+
+function createCSV() {
+    let csv = 'Symbol,Name,Price,24h Change,Market Cap,24h Volume,Timestamp\n';
+    cryptoData.forEach(crypto => {
+        csv += `"${crypto.symbol}","${crypto.name}",${crypto.price},${crypto.change24h},${crypto.marketCap},${crypto.volume24h},"${crypto.timestamp}"\n`;
+    });
+    return csv;
+}
+
+function downloadCSV(csvContent, fileName) {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Auto-refresh setup
+function setupAutoRefresh() {
+    // Clear existing interval
+    if (updateInterval) {
+        clearInterval(updateInterval);
+    }
+    
+    // Set new interval
+    updateInterval = setInterval(() => {
+        if (!isMarketPaused) {
+            fetchLiveCryptoData();
+            fetchMarketOverview();
+        }
+    }, CONFIG.UPDATE_INTERVAL);
+}
+
+// Utility functions
+function formatCurrency(value, compact = false) {
+    if (!value) return '$0';
+    
+    if (compact && value >= 1000000000) {
+        return `$${(value / 1000000000).toFixed(2)}B`;
+    } else if (compact && value >= 1000000) {
+        return `$${(value / 1000000).toFixed(2)}M`;
+    } else if (compact && value >= 1000) {
+        return `$${(value / 1000).toFixed(2)}K`;
+    }
+    
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(value);
+}
+
+function formatPercentage(value) {
+    const sign = value >= 0 ? '+' : '';
+    return `${sign}${value.toFixed(2)}%`;
+}
+
+function formatTimeAgo(timestamp) {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffMs = now - time;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins === 1) return '1 min ago';
+    if (diffMins < 60) return `${diffMins} mins ago`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours === 1) return '1 hour ago';
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return 'Yesterday';
+    return `${diffDays} days ago`;
+}
+
+function getConfidenceClass(confidence) {
+    const value = parseInt(confidence);
+    if (value >= 80) return 'confidence-high';
+    if (value >= 70) return 'confidence-medium';
+    return 'confidence-low';
+}
+
+
+// Testimonials
+function initializeTestimonials() {
+    const testimonials = [
+        { name: 'Vasquez Estephany from El Salvador', profit: '+$7,500', time: '2 hours ago' },
+        { name: 'Carlos Rodriguez from Mexico', profit: '+$12,300', time: '1 hour ago' },
+        { name: 'Maria Gonzalez from Colombia', profit: '+$9,800', time: '3 hours ago' },
+        { name: 'James Wilson from USA', profit: '+$25,400', time: '45 minutes ago' },
+        { name: 'Sophia Chen from China', profit: '+$18,900', time: '2 hours ago' },
+        { name: 'Luis Martinez from Spain', profit: '+$6,700', time: '4 hours ago' },
+        { name: 'Anna Kowalski from Poland', profit: '+$11,200', time: '1.5 hours ago' },
+        { name: 'Raj Patel from India', profit: '+$15,600', time: '2 hours ago' },
+        { name: 'Emma Thompson from Canada', profit: '+$22,100', time: '1 hour ago' },
+        { name: 'Hiroshi Tanaka from Japan', profit: '+$19,500', time: '3 hours ago' },
+        { name: 'Isabella Rossi from Italy', profit: '+$8,400', time: '5 hours ago' },
+        { name: 'Miguel Silva from Brazil', profit: '+$13,800', time: '2 hours ago' },
+        { name: 'Olivia Smith from Australia', profit: '+$27,300', time: '30 minutes ago' },
+        { name: 'David Kim from South Korea', profit: '+$16,700', time: '2 hours ago' },
+        { name: 'Chloe Dubois from France', profit: '+$10,900', time: '3 hours ago' },
+        { name: 'Alexei Ivanov from Russia', profit: '+$14,200', time: '4 hours ago' },
+        { name: 'Sofia Hernandez from Argentina', profit: '+$7,900', time: '6 hours ago' },
+        { name: 'Benjamin Müller from Germany', profit: '+$21,500', time: '1 hour ago' },
+        { name: 'Mia Jensen from Denmark', profit: '+$9,300', time: '3 hours ago' },
+        { name: 'Ethan Wright from UK', profit: '+$23,800', time: '2 hours ago' },
+        { name: 'Ava Berg from Sweden', profit: '+$12,600', time: '4 hours ago' },
+        { name: 'Noah Schmidt from Switzerland', profit: '+$31,200', time: '1 hour ago' },
+        { name: 'Charlotte Van Dijk from Netherlands', profit: '+$17,400', time: '3 hours ago' },
+        { name: 'Liam O\'Connor from Ireland', profit: '+$8,900', time: '5 hours ago' },
+        { name: 'Amelia Costa from Portugal', profit: '+$11,700', time: '2 hours ago' },
+        { name: 'Lucas Silva from Chile', profit: '+$14,500', time: '3 hours ago' },
+        { name: 'Harper Wong from Singapore', profit: '+$29,100', time: '1 hour ago' },
+        { name: 'Mason Ali from Pakistan', profit: '+$13,200', time: '4 hours ago' },
+        { name: 'Evelyn Park from South Korea', profit: '+$18,300', time: '2 hours ago' },
+        { name: 'Logan Garcia from Peru', profit: '+$9,100', time: '6 hours ago' },
+        { name: 'Aria Singh from Nepal', profit: '+$12,800', time: '3 hours ago' },
+        { name: 'Jackson Lee from Taiwan', profit: '+$22,900', time: '1 hour ago' },
+        { name: 'Lily Novak from Czech Republic', profit: '+$10,400', time: '4 hours ago' },
+        { name: 'Levi Andersen from Norway', profit: '+$25,700', time: '2 hours ago' },
+        { name: 'Grace Murphy from New Zealand', profit: '+$16,300', time: '3 hours ago' },
+        { name: 'Mateo Ruiz from Ecuador', profit: '+$8,200', time: '5 hours ago' },
+        { name: 'Riley Kowalczyk from Poland', profit: '+$14,900', time: '2 hours ago' },
+        { name: 'Carter Nguyen from Vietnam', profit: '+$19,800', time: '3 hours ago' },
+        { name: 'Zoe Fischer from Austria', profit: '+$11,500', time: '4 hours ago' },
+        { name: 'Julian Morozov from Ukraine', profit: '+$13,700', time: '2 hours ago' },
+        { name: 'Nora Alves from Brazil', profit: '+$20,400', time: '1 hour ago' },
+        { name: 'Leo Costa from Costa Rica', profit: '+$9,600', time: '6 hours ago' },
+        { name: 'Mila Jankovic from Serbia', profit: '+$12,100', time: '3 hours ago' },
+        { name: 'Owen Rahman from Bangladesh', profit: '+$15,800', time: '4 hours ago' },
+        { name: 'Luna Diaz from Dominican Republic', profit: '+$10,200', time: '5 hours ago' },
+        { name: 'Wyatt Saito from Japan', profit: '+$28,500', time: '1 hour ago' },
+        { name: 'Eleanor Popescu from Romania', profit: '+$13,900', time: '3 hours ago' },
+        { name: 'Henry Costa from Uruguay', profit: '+$11,300', time: '4 hours ago' },
+        { name: 'Penelope Vasiliev from Bulgaria', profit: '+$9,700', time: '6 hours ago' },
+        { name: 'Sebastian Horvat from Croatia', profit: '+$16,200', time: '2 hours ago' },
+        { name: 'Hannah Lopez from Philippines', profit: '+$14,600', time: '3 hours ago' },
+        { name: 'Gabriel Santos from Venezuela', profit: '+$8,800', time: '5 hours ago' },
+        { name: 'Victoria Moreau from Belgium', profit: '+$21,900', time: '1 hour ago' },
+        { name: 'Isaac Okafor from Nigeria', profit: '+$17,500', time: '3 hours ago' },
+        { name: 'Aurora Schmidt from Germany', profit: '+$23,400', time: '2 hours ago' },
+        { name: 'Jayden Ito from Japan', profit: '+$30,100', time: '1 hour ago' },
+        { name: 'Scarlett Papadopoulos from Greece', profit: '+$12,400', time: '4 hours ago' },
+        { name: 'Daniel Petrov from Russia', profit: '+$19,200', time: '3 hours ago' },
+        { name: 'Madison Costa from Portugal', profit: '+$15,100', time: '2 hours ago' },
+        { name: 'Matthew Kowalski from Poland', profit: '+$13,500', time: '5 hours ago' },
+        { name: 'Layla Hassan from Egypt', profit: '+$11,900', time: '4 hours ago' },
+        { name: 'Luke Fitzgerald from Ireland', profit: '+$18,700', time: '2 hours ago' }
+    ];
+    
+    const track = document.getElementById('testimonialsTrack');
+    if (!track) return;
+    
+    // Clear track
+    track.innerHTML = '';
+    
+    // Create testimonial items
+    testimonials.forEach(testimonial => {
+        const item = document.createElement('div');
+        item.className = 'testimonial-item glass-card';
+        
+        // Format the display text as requested
+        const displayText = `${testimonial.name} withdrew ${testimonial.profit}`;
+        
+        item.innerHTML = `
+            <div class="testimonial-avatar" style="background: var(--gradient-success)">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="testimonial-content">
+                <div class="testimonial-text">${displayText}</div>
+                <div class="testimonial-profit" style="color: var(--success-color); font-weight: 700;">${testimonial.profit}</div>
+                <div class="testimonial-time">${testimonial.time}</div>
+            </div>
+        `;
+        track.appendChild(item);
+    });
+    
+    // Duplicate for seamless loop (for continuous scrolling)
+    track.innerHTML += track.innerHTML;
+}
+// Animated counter
+function animateCounter(element) {
+    const target = parseInt(element.textContent.replace(/,/g, ''));
+    const duration = 2000;
+    const step = target / (duration / 16);
+    let current = 0;
+    
+    const timer = setInterval(() => {
+        current += step;
+        if (current >= target) {
+            current = target;
+            clearInterval(timer);
+        }
+        element.textContent = Math.floor(current).toLocaleString();
+    }, 16);
+}
+
+// Update signal time
+function updateSignalTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        second: '2-digit'
+    });
+    const signalTime = document.getElementById('signalTime');
+    if (signalTime) {
+        signalTime.textContent = timeString;
+        signalTime.classList.add('data-updated');
+        setTimeout(() => signalTime.classList.remove('data-updated'), 1000);
+    }
+}
+
+// UI state management
+function showLoadingState() {
+    const marketTrack = document.getElementById('marketTrack');
+    const statsContainer = document.getElementById('cryptoStatsContainer');
+    
+    if (marketTrack) {
+        marketTrack.innerHTML = `
+            <div class="market-loading">
+                <div class="loading-spinner"></div>
+                <span>Loading live crypto prices...</span>
+            </div>
+        `;
+    }
+    
+    if (statsContainer) {
+        statsContainer.innerHTML = `
+            <div class="signals-loading">
+                <div class="loading-spinner"></div>
+                <span>Loading live crypto statistics...</span>
+            </div>
+        `;
+    }
+}
+
+function showErrorState(message) {
+    const marketTrack = document.getElementById('marketTrack');
+    if (marketTrack) {
+        marketTrack.innerHTML = `
+            <div class="market-error">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>${message}</p>
+                <button class="modern-btn modern-btn--outline mt-3" onclick="fetchLiveCryptoData()">
+                    <i class="fas fa-redo me-2"></i>Retry
+                </button>
+            </div>
+        `;
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existing = document.querySelectorAll('.notification');
+    existing.forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                              type === 'error' ? 'exclamation-circle' : 
+                              'info-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.classList.add('fade-out');
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, 3000);
+}
+
+// Start time updates
+setInterval(updateSignalTime, 60000);
+updateSignalTime();
+</script>
+{% endblock %}

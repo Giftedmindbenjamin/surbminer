@@ -1,0 +1,1030 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Reports & Analytics - Minersurb{% endblock %}
+
+{% block admin_content %}
+<!-- Landing page background overlay -->
+<div class="landing-page-overlay"></div>
+
+<!-- Content Header -->
+<div class="content-header">
+    <div class="header-content">
+        <h1>Reports & Analytics</h1>
+        <p>Platform performance insights and statistics</p>
+        <div class="reports-summary">
+            <div class="summary-item">
+                <i class="fas fa-chart-line me-2"></i>
+                <div>
+                    <small class="text-muted">Platform Growth</small>
+                    <div class="summary-value">+{{ growth_percentage|floatformat:1 }}%</div>
+                </div>
+            </div>
+            <div class="summary-item">
+                <i class="fas fa-users me-2"></i>
+                <div>
+                    <small class="text-muted">Active Users</small>
+                    <div class="summary-value">{{ active_users_count }}</div>
+                </div>
+            </div>
+            <div class="summary-item">
+                <i class="fas fa-money-bill-wave me-2"></i>
+                <div>
+                    <small class="text-muted">Monthly Volume</small>
+                    <div class="summary-value">${{ monthly_volume|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Date Range Selector -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-calendar-alt me-2"></i>
+            Select Date Range
+        </h2>
+    </div>
+    
+    <form method="GET" class="date-range-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="start_date"><i class="fas fa-calendar me-2"></i>Start Date</label>
+                <input type="date" id="start_date" name="start_date" class="form-control" value="{{ start_date }}">
+            </div>
+            <div class="form-group">
+                <label for="end_date"><i class="fas fa-calendar me-2"></i>End Date</label>
+                <input type="date" id="end_date" name="end_date" class="form-control" value="{{ end_date }}">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-filter me-2"></i>Generate Report
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="setDateRange('week')">
+                <i class="fas fa-calendar-week me-2"></i>This Week
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="setDateRange('month')">
+                <i class="fas fa-calendar-alt me-2"></i>This Month
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="setDateRange('year')">
+                <i class="fas fa-calendar-year me-2"></i>This Year
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Financial Overview -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-chart-bar me-2"></i>
+            Financial Overview
+        </h2>
+    </div>
+    
+    <div class="charts-grid">
+        <div class="chart-container">
+            <h4>Deposits vs Withdrawals</h4>
+            <div class="chart-wrapper">
+                <canvas id="depositsWithdrawalsChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <h4>Daily Transaction Volume</h4>
+            <div class="chart-wrapper">
+                <canvas id="dailyVolumeChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Statistics -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-users me-2"></i>
+            User Statistics
+        </h2>
+    </div>
+    
+    <div class="user-stats-grid">
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <div class="stat-status">
+                    <span class="trend-up">
+                        <i class="fas fa-arrow-up me-1"></i>{{ new_users_today }}
+                    </span>
+                </div>
+            </div>
+            <div class="stat-value">{{ new_users_period }}</div>
+            <div class="stat-label">New Users</div>
+            <div class="stat-description">Registered this period</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="stat-status">
+                    <span class="trend-up">
+                        <i class="fas fa-arrow-up me-1"></i>{{ active_users_percentage|floatformat:1 }}%
+                    </span>
+                </div>
+            </div>
+            <div class="stat-value">{{ active_users_count }}</div>
+            <div class="stat-label">Active Users</div>
+            <div class="stat-description">Made at least one deposit</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-user-clock"></i>
+                </div>
+                <div class="stat-status">
+                    <span class="trend-total">
+                        <i class="fas fa-circle me-1"></i>Total
+                    </span>
+                </div>
+            </div>
+            <div class="stat-value">{{ total_users }}</div>
+            <div class="stat-label">Total Users</div>
+            <div class="stat-description">All registered users</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-status">
+                    <span class="trend-up">
+                        <i class="fas fa-arrow-up me-1"></i>{{ user_growth|floatformat:1 }}%
+                    </span>
+                </div>
+            </div>
+            <div class="stat-value">{{ avg_daily_signups|floatformat:1 }}</div>
+            <div class="stat-label">Avg. Daily Signups</div>
+            <div class="stat-description">New users per day</div>
+        </div>
+    </div>
+    
+    <div class="chart-container-full">
+        <h4>User Registration Trend</h4>
+        <div class="chart-wrapper">
+            <canvas id="userRegistrationChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Investment Statistics -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-chart-network me-2"></i>
+            Investment Statistics
+        </h2>
+    </div>
+    
+    <div class="investment-stats">
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-label">Total Investments</div>
+                <div class="stat-value">${{ total_investments|floatformat:2 }}</div>
+                <div class="stat-change {% if investment_growth > 0 %}positive{% else %}negative{% endif %}">
+                    <i class="fas fa-arrow-{% if investment_growth > 0 %}up{% else %}down{% endif %}"></i>
+                    {{ investment_growth|floatformat:1 }}% growth
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Active Investments</div>
+                <div class="stat-value">${{ active_investments|floatformat:2 }}</div>
+                <div class="stat-change {% if active_growth > 0 %}positive{% else %}negative{% endif %}">
+                    <i class="fas fa-arrow-{% if active_growth > 0 %}up{% else %}down{% endif %}"></i>
+                    {{ active_growth|floatformat:1 }}% change
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Avg. Investment</div>
+                <div class="stat-value">${{ average_investment|floatformat:2 }}</div>
+                <div class="stat-change {% if avg_investment_growth > 0 %}positive{% else %}negative{% endif %}">
+                    <i class="fas fa-arrow-{% if avg_investment_growth > 0 %}up{% else %}down{% endif %}"></i>
+                    {{ avg_investment_growth|floatformat:1 }}% change
+                </div>
+            </div>
+        </div>
+        
+        <div class="plan-distribution-chart">
+            <h4>Investment Plan Distribution</h4>
+            <div class="chart-wrapper">
+                <canvas id="planDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Platform Performance -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-tachometer-alt me-2"></i>
+            Platform Performance
+        </h2>
+    </div>
+    
+    <div class="performance-metrics">
+        <div class="metric-card">
+            <div class="metric-header">
+                <i class="fas fa-arrow-down metric-icon deposit"></i>
+                <h4>Deposit Success Rate</h4>
+            </div>
+            <div class="metric-value">{{ deposit_success_rate|floatformat:1 }}%</div>
+            <div class="metric-progress">
+                <div class="progress">
+                    <div class="progress-bar" style="width: {{ deposit_success_rate }}%"></div>
+                </div>
+            </div>
+            <div class="metric-description">Successful deposits vs total requests</div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-header">
+                <i class="fas fa-arrow-up metric-icon withdrawal"></i>
+                <h4>Withdrawal Success Rate</h4>
+            </div>
+            <div class="metric-value">{{ withdrawal_success_rate|floatformat:1 }}%</div>
+            <div class="metric-progress">
+                <div class="progress">
+                    <div class="progress-bar" style="width: {{ withdrawal_success_rate }}%"></div>
+                </div>
+            </div>
+            <div class="metric-description">Successful withdrawals vs total requests</div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-header">
+                <i class="fas fa-clock metric-icon processing"></i>
+                <h4>Avg. Processing Time</h4>
+            </div>
+            <div class="metric-value">{{ avg_processing_time|floatformat:1 }}h</div>
+            <div class="metric-progress">
+                <div class="progress">
+                    <div class="progress-bar" style="width: {{ processing_efficiency }}%"></div>
+                </div>
+            </div>
+            <div class="metric-description">Average transaction processing time</div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-header">
+                <i class="fas fa-user-shield metric-icon security"></i>
+                <h4>Platform Security</h4>
+            </div>
+            <div class="metric-value">{{ security_score|floatformat:1 }}/10</div>
+            <div class="metric-progress">
+                <div class="progress">
+                    <div class="progress-bar" style="width: {{ security_score }}0%"></div>
+                </div>
+            </div>
+            <div class="metric-description">Security and compliance score</div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Options -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-file-export me-2"></i>
+            Export Reports
+        </h2>
+    </div>
+    
+    <div class="export-options">
+        <button class="export-btn" onclick="exportReport('pdf')">
+            <i class="fas fa-file-pdf"></i>
+            <span>Export as PDF</span>
+        </button>
+        <button class="export-btn" onclick="exportReport('csv')">
+            <i class="fas fa-file-csv"></i>
+            <span>Export as CSV</span>
+        </button>
+        <button class="export-btn" onclick="exportReport('excel')">
+            <i class="fas fa-file-excel"></i>
+            <span>Export as Excel</span>
+        </button>
+        <button class="export-btn" onclick="printReport()">
+            <i class="fas fa-print"></i>
+            <span>Print Report</span>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setDateRange(range) {
+    const today = new Date();
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    
+    let startDate = new Date();
+    
+    switch(range) {
+        case 'week':
+            startDate.setDate(today.getDate() - 7);
+            break;
+        case 'month':
+            startDate.setMonth(today.getMonth() - 1);
+            break;
+        case 'year':
+            startDate.setFullYear(today.getFullYear() - 1);
+            break;
+    }
+    
+    // Format dates as YYYY-MM-DD
+    const formatDate = (date) => {
+        return date.toISOString().split('T')[0];
+    };
+    
+    startDateInput.value = formatDate(startDate);
+    endDateInput.value = formatDate(today);
+    
+    // Submit the form
+    startDateInput.form.submit();
+}
+
+function exportReport(format) {
+    // In a real implementation, this would generate and download the report
+    alert(`Exporting report as ${format.toUpperCase()}... This feature would generate and download the report in a real implementation.`);
+}
+
+function printReport() {
+    window.print();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Deposits vs Withdrawals Chart
+    const dwCtx = document.getElementById('depositsWithdrawalsChart').getContext('2d');
+    new Chart(dwCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ dates|safe }},
+            datasets: [
+                {
+                    label: 'Deposits',
+                    data: {{ deposit_data|safe }},
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Withdrawals',
+                    data: {{ withdrawal_data|safe }},
+                    backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                    borderColor: 'rgba(239, 68, 68, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: 'rgba(255, 255, 255, 0.8)'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.6)'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Daily Volume Chart
+    const dvCtx = document.getElementById('dailyVolumeChart').getContext('2d');
+    new Chart(dvCtx, {
+        type: 'line',
+        data: {
+            labels: {{ dates|safe }},
+            datasets: [{
+                label: 'Daily Volume',
+                data: {{ daily_volume_data|safe }},
+                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.6)'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // User Registration Chart
+    const urCtx = document.getElementById('userRegistrationChart').getContext('2d');
+    new Chart(urCtx, {
+        type: 'line',
+        data: {
+            labels: {{ dates|safe }},
+            datasets: [{
+                label: 'New Users',
+                data: {{ user_data|safe }},
+                backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                borderColor: 'rgba(139, 92, 246, 1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: 'rgba(255, 255, 255, 0.8)'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.6)'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+    
+    // Plan Distribution Chart
+    const pdCtx = document.getElementById('planDistributionChart').getContext('2d');
+    new Chart(pdCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Basic', 'Standard', 'Advanced', 'Premium'],
+            datasets: [{
+                data: {{ plan_distribution_data|safe }},
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(139, 92, 246, 0.8)',
+                    'rgba(6, 182, 212, 0.8)',
+                    'rgba(16, 185, 129, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(59, 130, 246, 1)',
+                    'rgba(139, 92, 246, 1)',
+                    'rgba(6, 182, 212, 1)',
+                    'rgba(16, 185, 129, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        padding: 20,
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+
+<style>
+/* Reports Specific Styles */
+.reports-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.summary-item i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    background: rgba(59, 130, 246, 0.1);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+}
+
+.summary-item:nth-child(2) i {
+    color: var(--info-color);
+    background: rgba(14, 165, 233, 0.1);
+}
+
+.summary-item:nth-child(3) i {
+    color: var(--success-color);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.summary-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 0.25rem;
+}
+
+/* Date Range Form */
+.date-range-form {
+    padding: 1rem 0;
+}
+
+.date-range-form .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.date-range-form .form-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.date-range-form .btn {
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 140px;
+}
+
+/* Charts */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.chart-container {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+}
+
+.chart-container h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+}
+
+.chart-wrapper {
+    height: 250px;
+    position: relative;
+}
+
+.chart-container-full {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.chart-container-full h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+}
+
+.chart-container-full .chart-wrapper {
+    height: 300px;
+}
+
+/* User Stats Grid */
+.user-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    font-size: 1.25rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    line-height: 1;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.stat-description {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+/* Investment Statistics */
+.investment-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.stat-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.stat-item .stat-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-item .stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.stat-change {
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.stat-change.positive {
+    color: var(--success-color);
+}
+
+.stat-change.negative {
+    color: var(--danger-color);
+}
+
+.plan-distribution-chart {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+}
+
+.plan-distribution-chart h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+    text-align: center;
+}
+
+.plan-distribution-chart .chart-wrapper {
+    height: 300px;
+}
+
+/* Performance Metrics */
+.performance-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.metric-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.metric-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    justify-content: center;
+}
+
+.metric-icon {
+    font-size: 1.25rem;
+    background: rgba(255, 255, 255, 0.1);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+}
+
+.metric-icon.deposit {
+    color: var(--success-color);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.metric-icon.withdrawal {
+    color: var(--danger-color);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.metric-icon.processing {
+    color: var(--warning-color);
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.metric-icon.security {
+    color: var(--info-color);
+    background: rgba(14, 165, 233, 0.1);
+}
+
+.metric-header h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.metric-progress {
+    margin-bottom: 0.75rem;
+}
+
+.metric-progress .progress {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.metric-progress .progress-bar {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+.metric-description {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* Export Options */
+.export-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.export-btn {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.export-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(148, 163, 184, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.export-btn i {
+    font-size: 2rem;
+    color: var(--primary-color);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-container {
+        min-height: 250px;
+    }
+}
+
+@media (max-width: 768px) {
+    .reports-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .date-range-form .form-actions {
+        flex-direction: column;
+    }
+    
+    .date-range-form .btn {
+        width: 100%;
+    }
+    
+    .user-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .stats-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .performance-metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .export-options {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .content-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .summary-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .user-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-card {
+        padding: 1.25rem;
+    }
+    
+    .stat-value {
+        font-size: 1.75rem;
+    }
+    
+    .performance-metrics {
+        grid-template-columns: 1fr;
+    }
+    
+    .export-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .metric-card {
+        padding: 1.25rem;
+    }
+    
+    .metric-value {
+        font-size: 1.75rem;
+    }
+}
+</style>
+{% endblock %}

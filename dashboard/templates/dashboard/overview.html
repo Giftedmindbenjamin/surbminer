@@ -1,0 +1,1120 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Dashboard Overview - Minersurb{% endblock %}
+
+{% block dashboard_content %}
+<!-- Landing page background overlay -->
+<div class="landing-page-overlay"></div>
+
+<!-- Content Header -->
+<div class="content-header">
+    <div class="header-content">
+        <h1>Dashboard Overview</h1>
+        <p>Welcome back, {{ user.full_name|default:user.username }}! Here's your investment summary.</p>
+        <div class="last-login">
+            <i class="fas fa-clock me-1"></i>
+            <small class="text-muted">Last login: <span class="last-login-time"></span></small>
+        </div>
+    </div>
+</div>
+
+<!-- Top Stats Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-status">
+                <span class="badge status-active">
+                    <i class="fas fa-circle me-1"></i>Active
+                </span>
+            </div>
+        </div>
+        <div class="stat-value">${{ user.active_balance|default:"0.00" }}</div>
+        <div class="stat-label">Active Balance</div>
+        <div class="stat-description">Invested in running plans</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <div class="stat-status">
+                <span class="badge status-available">
+                    <i class="fas fa-circle me-1"></i>Available
+                </span>
+            </div>
+        </div>
+        <div class="stat-value">${{ user.account_balance|default:"0.00" }}</div>
+        <div class="stat-label">Account Balance</div>
+        <div class="stat-description">Available for withdrawal</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="stat-status">
+                <span class="trend-up">
+                    <i class="fas fa-arrow-up me-1"></i>+12.5%
+                </span>
+            </div>
+        </div>
+        <div class="stat-value">${{ user.total_earnings|default:"0.00" }}</div>
+        <div class="stat-label">Total Earnings</div>
+        <div class="stat-description">All-time profit</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-status">
+                <span class="trend-up">
+                    <i class="fas fa-arrow-up me-1"></i>{{ total_referrals|default:0 }}
+                </span>
+            </div>
+        </div>
+        <div class="stat-value">{{ total_referrals|default:0 }}</div>
+        <div class="stat-label">Total Referrals</div>
+        <div class="stat-description">Users you referred</div>
+    </div>
+</div>
+
+<!-- Secondary Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="fas fa-gift"></i>
+            </div>
+            <div class="stat-status">
+                <span class="trend-up">
+                    <i class="fas fa-arrow-up me-1"></i>5%
+                </span>
+            </div>
+        </div>
+        <div class="stat-value">${{ user.referral_earnings|default:"0.00" }}</div>
+        <div class="stat-label">Referral Earnings</div>
+        <div class="stat-description">Commission from referrals</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="fas fa-arrow-down"></i>
+            </div>
+            <div class="stat-status">
+                <span class="trend-total">
+                    <i class="fas fa-circle me-1"></i>Total
+                </span>
+            </div>
+        </div>
+        <div class="stat-value">${{ total_deposits|default:"0.00" }}</div>
+        <div class="stat-label">Total Deposits</div>
+        <div class="stat-description">Approved deposits</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="fas fa-arrow-up"></i>
+            </div>
+            <div class="stat-status">
+                <span class="status-paid">
+                    <i class="fas fa-check-circle me-1"></i>Paid
+                </span>
+            </div>
+        </div>
+        <div class="stat-value">${{ total_withdrawals|default:"0.00" }}</div>
+        <div class="stat-label">Total Withdrawals</div>
+        <div class="stat-description">Approved withdrawals</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-status">
+                <span class="status-pending">
+                    <i class="fas fa-clock me-1"></i>Pending
+                </span>
+            </div>
+        </div>
+        <div class="stat-value">${{ pending_withdrawals|default:"0.00" }}</div>
+        <div class="stat-label">Pending Withdrawals</div>
+        <div class="stat-description">Awaiting approval</div>
+    </div>
+</div>
+
+<!-- Active Investments Section -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-chart-network me-2"></i>
+            Active Investments
+        </h2>
+        <a href="{% url 'dashboard:deposit' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>New Investment
+        </a>
+    </div>
+    
+    {% if active_investments %}
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>Plan</th>
+                        <th>Amount</th>
+                        <th>Daily Profit</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Remaining</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for investment in active_investments %}
+                    <tr>
+                        <td>
+                            <div class="plan-info">
+                                <div class="plan-icon">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <div class="plan-details">
+                                    <strong>{{ investment.plan.name }}</strong>
+                                    <small>{{ investment.plan.daily_percentage }}% daily</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="amount">${{ investment.amount }}</td>
+                        <td class="profit">${{ investment.daily_profit }}</td>
+                        <td class="date">{{ investment.start_date|date:"M d, Y" }}</td>
+                        <td class="date">{{ investment.end_date|date:"M d, Y" }}</td>
+                        <td>
+                            <div class="progress-container">
+                                <div class="progress-label">
+                                    <span>{{ investment.days_elapsed }} of {{ investment.plan.duration_days }} days</span>
+                                </div>
+                                {% widthratio investment.days_elapsed investment.plan.duration_days 100 as progress %}
+                                <div class="progress">
+                                    <div class="progress-bar" style="width: {{ progress }}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge status-active">
+                                <i class="fas fa-check-circle me-1"></i>Active
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <h3>No Active Investments</h3>
+        <p>You don't have any active investments yet. Start earning by making your first deposit!</p>
+        <a href="{% url 'dashboard:deposit' %}" class="btn btn-primary mt-3">
+            <i class="fas fa-rocket me-2"></i>Start Investing
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quick Actions Section -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-bolt me-2"></i>
+            Quick Actions
+        </h2>
+    </div>
+    
+    <div class="actions-grid">
+        <a href="{% url 'dashboard:deposit' %}" class="action-card">
+            <div class="action-icon deposit">
+                <i class="fas fa-arrow-down"></i>
+            </div>
+            <h4>Make Deposit</h4>
+            <p>Add funds to your account</p>
+            <div class="action-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+        
+        <a href="{% url 'dashboard:withdrawal' %}" class="action-card">
+            <div class="action-icon withdrawal">
+                <i class="fas fa-arrow-up"></i>
+            </div>
+            <h4>Request Withdrawal</h4>
+            <p>Withdraw your earnings</p>
+            <div class="action-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+        
+        <a href="{% url 'dashboard:referrals' %}" class="action-card">
+            <div class="action-icon referral">
+                <i class="fas fa-users"></i>
+            </div>
+            <h4>Refer Friends</h4>
+            <p>Earn 5% commission</p>
+            <div class="action-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+        
+        <a href="{% url 'dashboard:profile' %}" class="action-card">
+            <div class="action-icon profile">
+                <i class="fas fa-user-cog"></i>
+            </div>
+            <h4>Profile Settings</h4>
+            <p>Update your information</p>
+            <div class="action-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-history me-2"></i>
+            Recent Activity
+        </h2>
+        <a href="{% url 'dashboard:history' %}" class="btn btn-secondary">
+            <i class="fas fa-list me-2"></i>View All
+        </a>
+    </div>
+    
+    <div class="activity-container">
+        {% if deposits %}
+            <div class="activity-list">
+                {% for deposit in deposits|slice:":5" %}
+                <div class="activity-item">
+                    <div class="activity-icon {% if deposit.status == 'approved' %}approved{% else %}pending{% endif %}">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h5>Deposit: ${{ deposit.amount }}</h5>
+                        <div class="activity-meta">
+                            <span class="crypto">{{ deposit.crypto_type }}</span>
+                            <span class="time">{{ deposit.created_at|date:"M d, Y H:i" }}</span>
+                        </div>
+                        <span class="badge status-{{ deposit.status|lower }}">
+                            {{ deposit.status|title }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <h3>No Recent Activity</h3>
+                <p>Your transaction history will appear here.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add animations and interactivity
+document.addEventListener('DOMContentLoaded', function() {
+    // Update last login time
+    const lastLoginElement = document.querySelector('.last-login-time');
+    if (lastLoginElement) {
+        const lastLogin = new Date('{{ user.last_login|date:"c" }}');
+        const now = new Date();
+        const diffHours = Math.floor((now - lastLogin) / (1000 * 60 * 60));
+        
+        let timeAgo;
+        if (diffHours < 1) {
+            timeAgo = 'Just now';
+        } else if (diffHours < 24) {
+            timeAgo = `${diffHours} hours ago`;
+        } else {
+            timeAgo = `${Math.floor(diffHours / 24)} days ago`;
+        }
+        
+        lastLoginElement.textContent = timeAgo;
+    }
+    
+    // Add hover effects to action cards
+    const actionCards = document.querySelectorAll('.action-card');
+    actionCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+
+<style>
+/* Landing page background for dashboard */
+.landing-page-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        linear-gradient(rgba(2, 6, 23, 0.7), rgba(2, 6, 23, 0.8)),
+        url('/static/img/bg-minersurb.png') center/cover no-repeat fixed;
+    z-index: -10;
+}
+
+/* Apply landing page gradient overlay */
+.landing-page-overlay::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(6, 182, 212, 0.07) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+/* Content Header */
+.content-header {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-content h1 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary-color) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.header-content p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.last-login {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Stat Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(148, 163, 184, 0.4);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    background: rgba(30, 41, 59, 0.8);
+}
+
+.stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    font-size: 1.25rem;
+}
+
+.stat-status .badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+}
+
+.status-active {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-available {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.status-paid {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning-color);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.trend-up {
+    color: var(--success-color);
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.trend-total {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    line-height: 1;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.stat-description {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+/* Dashboard Section */
+.dashboard-section {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.section-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-header .btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all var(--transition-normal);
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+    border: 1px solid var(--primary-color);
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+    border-color: #2563eb;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    border-color: rgba(148, 163, 184, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Table Styles */
+.table-container {
+    overflow-x: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.dashboard-table thead {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.dashboard-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dashboard-table td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    color: var(--text-secondary);
+}
+
+.dashboard-table tbody tr {
+    transition: all var(--transition-fast);
+}
+
+.dashboard-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.plan-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.plan-icon {
+    width: 36px;
+    height: 36px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+}
+
+.plan-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.plan-details strong {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.plan-details small {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.amount, .profit, .date {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.profit {
+    color: var(--success-color);
+}
+
+.progress-container {
+    min-width: 150px;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+}
+
+.progress-label span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.progress {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--success-color);
+    border-radius: 3px;
+    transition: width 0.6s ease;
+}
+
+/* Badge Styles */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--text-muted);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-secondary);
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    font-size: 0.95rem;
+    max-width: 400px;
+    margin: 0 auto 1.5rem;
+    line-height: 1.5;
+}
+
+/* Actions Grid */
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.action-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    text-decoration: none;
+    transition: all var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    position: relative;
+}
+
+.action-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(148, 163, 184, 0.4);
+    transform: translateY(-5px);
+}
+
+.action-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.action-icon.deposit {
+    background: linear-gradient(135deg, var(--primary-color), #2563eb);
+}
+
+.action-icon.withdrawal {
+    background: linear-gradient(135deg, var(--success-color), #059669);
+}
+
+.action-icon.referral {
+    background: linear-gradient(135deg, var(--warning-color), #d97706);
+}
+
+.action-icon.profile {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.action-card h4 {
+    color: var(--text-primary);
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.action-card p {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.action-arrow {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    color: var(--text-muted);
+    transition: all var(--transition-normal);
+}
+
+.action-card:hover .action-arrow {
+    color: var(--text-primary);
+    transform: translateX(3px);
+}
+
+/* Activity List */
+.activity-container {
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    transition: all var(--transition-fast);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.activity-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.activity-icon.approved {
+    background: var(--success-color);
+}
+
+.activity-icon.pending {
+    background: var(--warning-color);
+}
+
+.activity-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-content h5 {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.activity-meta {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+}
+
+.activity-meta .crypto {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.activity-meta .time {
+    color: var(--text-muted);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* Tablet */
+@media (max-width: 1024px) {
+    .content-header h1 {
+        font-size: 2rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Mobile (Tablet and below) */
+@media (max-width: 768px) {
+    .content-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+    }
+    
+    .header-content h1 {
+        font-size: 1.75rem;
+    }
+    
+    .header-content p {
+        font-size: 1rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .dashboard-section {
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.25rem;
+    }
+    
+    .section-header .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .table-container {
+        border: none;
+        background: transparent;
+    }
+    
+    .dashboard-table {
+        min-width: 100%;
+    }
+    
+    .dashboard-table th,
+    .dashboard-table td {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    /* Hide less important columns on mobile */
+    .dashboard-table th:nth-child(3),
+    .dashboard-table td:nth-child(3),
+    .dashboard-table th:nth-child(4),
+    .dashboard-table td:nth-child(4) {
+        display: none;
+    }
+    
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .activity-item {
+        padding: 0.875rem;
+    }
+    
+    .activity-content h5 {
+        font-size: 0.9rem;
+    }
+    
+    .activity-meta {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+    
+    .empty-icon {
+        font-size: 2.5rem;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.125rem;
+    }
+    
+    .empty-state p {
+        font-size: 0.9rem;
+    }
+}
+
+/* Small Phones */
+@media (max-width: 576px) {
+    .content-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .header-content p {
+        font-size: 0.95rem;
+    }
+    
+    .stat-value {
+        font-size: 1.75rem;
+    }
+    
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.125rem;
+    }
+    
+    .dashboard-section {
+        padding: 1rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.125rem;
+    }
+    
+    .section-header .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .action-card {
+        padding: 1.25rem;
+    }
+    
+    .action-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 1.125rem;
+    }
+    
+    .action-card h4 {
+        font-size: 1rem;
+    }
+    
+    .action-card p {
+        font-size: 0.8rem;
+    }
+    
+    .activity-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 0.75rem;
+    }
+    
+    .activity-item {
+        padding: 0.75rem;
+        gap: 0.75rem;
+    }
+    
+    .activity-content h5 {
+        font-size: 0.85rem;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,185 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Minersurb Dashboard{% endblock %}</title>
+    
+    <!-- Include landing page CSS -->
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Dashboard CSS -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="dashboard-body">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{% url 'dashboard:overview' %}" class="logo-container">
+                <img src="{% static 'img/logo.png' %}" alt="Minersurb Logo" class="navbar-logo">
+                <span class="logo-text">MINERSURB</span>
+            </a>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="nav-links">
+                <div class="user-info">
+                    <div class="user-avatar">{{ user.username|first|upper }}</div>
+                    <span class="d-none d-md-inline">{{ user.username }}</span>
+                </div>
+                <a href="{% url 'core:logout' %}" class="btn hover-lift d-none d-lg-inline-flex">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="d-none d-md-inline">Sign Out</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <button class="sidebar-close d-lg-none" id="sidebarClose">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <!-- User Info in Sidebar for Mobile -->
+            <div class="sidebar-user-info d-lg-none">
+                <div class="user-avatar">{{ user.username|first|upper }}</div>
+                <div class="user-details">
+                    <div class="user-name">{{ user.username }}</div>
+                    <div class="user-balance">${{ user.account_balance|default:"0.00" }}</div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{% url 'dashboard:overview' %}" class="nav-item {% if request.resolver_match.url_name == 'overview' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'dashboard:deposit' %}" class="nav-item {% if request.resolver_match.url_name == 'deposit' %}active{% endif %}">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>Deposit</span>
+                </a>
+                <a href="{% url 'dashboard:withdrawal' %}" class="nav-item {% if request.resolver_match.url_name == 'withdrawal' %}active{% endif %}">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>Withdrawal</span>
+                </a>
+                <a href="{% url 'dashboard:profile' %}" class="nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                    <i class="fas fa-user-cog"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="{% url 'dashboard:history' %}" class="nav-item {% if request.resolver_match.url_name == 'history' %}active{% endif %}">
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
+                </a>
+                <a href="{% url 'dashboard:referrals' %}" class="nav-item {% if request.resolver_match.url_name == 'referrals' %}active{% endif %}">
+                    <i class="fas fa-users"></i>
+                    <span>Referrals</span>
+                </a>
+                <a href="{% url 'dashboard:support' %}" class="nav-item {% if request.resolver_match.url_name == 'support' %}active{% endif %}">
+                    <i class="fas fa-headset"></i>
+                    <span>Support</span>
+                </a>
+                
+                <!-- Sign Out in Sidebar (Mobile Only) -->
+                <a href="{% url 'core:logout' %}" class="nav-item nav-item-logout d-lg-none">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sign Out</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            {% block dashboard_content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Include JavaScript -->
+    <script src="{% static 'js/three.min.js' %}"></script>
+    <script src="{% static 'js/vanta.fog.min.js' %}"></script>
+    <script src="{% static 'js/dashboard.js' %}"></script>
+    
+    <script>
+    // Mobile menu functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const sidebarClose = document.getElementById('sidebarClose');
+        
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+            menuBtn.classList.toggle('active');
+            document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : 'auto';
+        }
+        
+        function closeSidebar() {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            menuBtn.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        
+        if (menuBtn && sidebar) {
+            // Open sidebar
+            menuBtn.addEventListener('click', toggleSidebar);
+            
+            // Close sidebar with close button
+            if (sidebarClose) {
+                sidebarClose.addEventListener('click', closeSidebar);
+            }
+            
+            // Close sidebar with overlay
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', closeSidebar);
+            }
+            
+            // Close sidebar when clicking on a link
+            const navLinks = document.querySelectorAll('.nav-item');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    closeSidebar();
+                });
+            });
+            
+            // Close sidebar on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeSidebar();
+                }
+            });
+        }
+        
+        // Add logo hover effect
+        const logoContainer = document.querySelector('.logo-container');
+        const navbarLogo = document.querySelector('.navbar-logo');
+        
+        if (logoContainer && navbarLogo) {
+            logoContainer.addEventListener('mouseenter', function() {
+                navbarLogo.style.transform = 'rotate(5deg) scale(1.1)';
+            });
+            
+            logoContainer.addEventListener('mouseleave', function() {
+                navbarLogo.style.transform = 'rotate(0deg) scale(1)';
+            });
+        }
+    });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

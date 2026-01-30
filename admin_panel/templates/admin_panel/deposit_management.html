@@ -1,0 +1,580 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Deposit Management - Minersurb{% endblock %}
+
+{% block admin_content %}
+<!-- Landing page background overlay -->
+<div class="landing-page-overlay"></div>
+
+<!-- Content Header -->
+<div class="content-header">
+    <div class="header-content">
+        <h1>Deposit Management</h1>
+        <p>Review and manage user deposit requests</p>
+        <div class="deposits-summary">
+            <div class="summary-item">
+                <i class="fas fa-clock me-2"></i>
+                <div>
+                    <small class="text-muted">Pending Deposits</small>
+                    <div class="summary-value">{{ pending_count }}</div>
+                </div>
+            </div>
+            <div class="summary-item">
+                <i class="fas fa-check-circle me-2"></i>
+                <div>
+                    <small class="text-muted">Approved Deposits</small>
+                    <div class="summary-value">{{ approved_count }}</div>
+                </div>
+            </div>
+            <div class="summary-item">
+                <i class="fas fa-times-circle me-2"></i>
+                <div>
+                    <small class="text-muted">Cancelled Deposits</small>
+                    <div class="summary-value">{{ cancelled_count }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if messages %}
+<div class="messages-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Filters -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-filter me-2"></i>
+            Filter Deposits
+        </h2>
+    </div>
+    
+    <form method="GET" class="search-filters">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="status"><i class="fas fa-filter me-2"></i>Status</label>
+                <select id="status" name="status" class="form-control">
+                    <option value="">All Status</option>
+                    <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending</option>
+                    <option value="APPROVED" {% if status_filter == 'APPROVED' %}selected{% endif %}>Approved</option>
+                    <option value="CANCELLED" {% if status_filter == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="crypto"><i class="fas fa-coins me-2"></i>Crypto Type</label>
+                <select id="crypto" name="crypto" class="form-control">
+                    <option value="">All Crypto</option>
+                    <option value="BTC" {% if crypto_filter == 'BTC' %}selected{% endif %}>Bitcoin (BTC)</option>
+                    <option value="ETH" {% if crypto_filter == 'ETH' %}selected{% endif %}>Ethereum (ETH)</option>
+                    <option value="TRX" {% if crypto_filter == 'TRX' %}selected{% endif %}>TRON (TRX)</option>
+                    <option value="USDT" {% if crypto_filter == 'USDT' %}selected{% endif %}>USDT</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="date_from"><i class="fas fa-calendar me-2"></i>Date From</label>
+                <input type="date" id="date_from" name="date_from" class="form-control" value="{{ date_from }}">
+            </div>
+            <div class="form-group">
+                <label for="date_to"><i class="fas fa-calendar me-2"></i>Date To</label>
+                <input type="date" id="date_to" name="date_to" class="form-control" value="{{ date_to }}">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-filter me-2"></i>Apply Filters
+            </button>
+            <a href="{% url 'admin_panel:deposit_management' %}" class="btn btn-secondary">
+                <i class="fas fa-times me-2"></i>Clear Filters
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Deposits Table -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-arrow-down me-2"></i>
+            Deposits List
+        </h2>
+        <div class="section-info">
+            Showing {{ deposits|length }} deposit{{ deposits|length|pluralize }}
+        </div>
+    </div>
+    
+    {% if deposits %}
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Amount</th>
+                        <th>Crypto</th>
+                        <th>Transaction Hash</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for deposit in deposits %}
+                    <tr>
+                        <td>
+                            <div class="user-info-cell">
+                                <div class="user-avatar-small">{{ deposit.user.username|first|upper }}</div>
+                                <div class="user-details">
+                                    <div class="user-name">{{ deposit.user.username }}</div>
+                                    <div class="user-email">{{ deposit.user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="amount">${{ deposit.amount }}</td>
+                        <td>
+                            <span class="crypto-badge {{ deposit.crypto_type|lower }}">
+                                {{ deposit.crypto_type }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if deposit.transaction_hash %}
+                            <div class="trx-hash" title="{{ deposit.transaction_hash }}">
+                                {{ deposit.transaction_hash|truncatechars:20 }}
+                            </div>
+                            {% else %}
+                            <span class="text-muted">Not provided</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge status-{{ deposit.status|lower }}">
+                                {{ deposit.status|title }}
+                            </span>
+                        </td>
+                        <td class="date">{{ deposit.created_at|date:"M d, Y H:i" }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                {% if deposit.status == 'PENDING' %}
+                                <a href="{% url 'admin_panel:approve_deposit' deposit.id %}" class="btn-icon btn-icon-success" title="Approve Deposit">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                <a href="{% url 'admin_panel:cancel_deposit' deposit.id %}" class="btn-icon btn-icon-warning" title="Cancel Deposit">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                                {% endif %}
+                                <a href="#" class="btn-icon" title="View Details" onclick="viewDepositDetails({{ deposit.id }})">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="table-footer">
+            <div class="table-info">
+                Total: {{ deposits|length }} deposit{{ deposits|length|pluralize }}
+                {% if total_amount %} • Total Amount: ${{ total_amount|floatformat:2 }}{% endif %}
+            </div>
+            <div class="table-pagination">
+                <!-- Add pagination here if needed -->
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-inbox"></i>
+        </div>
+        <h3>No Deposits Found</h3>
+        <p>No deposits match your search criteria. Try different filters.</p>
+        <a href="{% url 'admin_panel:deposit_management' %}" class="btn btn-primary mt-3">
+            <i class="fas fa-redo me-2"></i>Clear Filters
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quick Actions -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-bolt me-2"></i>
+            Quick Actions
+        </h2>
+    </div>
+    
+    <div class="actions-grid">
+        <a href="{% url 'admin_panel:deposit_management' %}?status=PENDING" class="action-card">
+            <div class="action-icon pending">
+                <i class="fas fa-clock"></i>
+            </div>
+            <h4>View Pending</h4>
+            <p>Review pending deposits</p>
+            <div class="action-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+        
+        <a href="{% url 'admin_panel:user_management' %}" class="action-card">
+            <div class="action-icon users">
+                <i class="fas fa-users"></i>
+            </div>
+            <h4>User Management</h4>
+            <p>Manage user accounts</p>
+            <div class="action-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+        
+        <a href="{% url 'admin_panel:transaction_history' %}" class="action-card">
+            <div class="action-icon history">
+                <i class="fas fa-history"></i>
+            </div>
+            <h4>Transaction History</h4>
+            <p>View all transactions</p>
+            <div class="action-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Deposit Details Modal -->
+<div id="depositDetailsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Deposit Details</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="depositDetailsContent">
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin me-2"></i>
+                Loading deposit details...
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function viewDepositDetails(depositId) {
+    // In a real implementation, you would fetch details from an API
+    document.getElementById('depositDetailsContent').innerHTML = `
+        <div class="detail-item">
+            <div class="detail-label">Deposit ID</div>
+            <div class="detail-value">${depositId}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Loading Details</div>
+            <div class="detail-value">Fetching deposit information...</div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+        </div>
+    `;
+    
+    document.getElementById('depositDetailsModal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('depositDetailsModal').style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when status changes
+    const statusSelect = document.getElementById('status');
+    const cryptoSelect = document.getElementById('crypto');
+    
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
+    
+    if (cryptoSelect) {
+        cryptoSelect.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            closeModal();
+        }
+    };
+});
+</script>
+
+<style>
+/* Deposit Management Specific Styles */
+.deposits-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.summary-item i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    background: rgba(59, 130, 246, 0.1);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+}
+
+.summary-item:nth-child(2) i {
+    color: var(--success-color);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.summary-item:nth-child(3) i {
+    color: var(--danger-color);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.summary-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 0.25rem;
+}
+
+/* Transaction hash */
+.trx-hash {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.trx-hash:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.user-email {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: 0.125rem;
+}
+
+/* Action icons */
+.btn-icon-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.btn-icon-success:hover {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--success-color);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.btn-icon-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning-color);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.btn-icon-warning:hover {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--warning-color);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+/* Action cards */
+.action-icon.pending {
+    background: linear-gradient(135deg, var(--warning-color), #d97706);
+}
+
+.action-icon.history {
+    background: linear-gradient(135deg, var(--info-color), #0284c7);
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal-content {
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.modal-header h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+.loading-state {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.detail-item {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.detail-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.detail-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.detail-value {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    word-break: break-all;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .form-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .deposits-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+    }
+    
+    /* Hide less important columns on mobile */
+    .dashboard-table th:nth-child(3),
+    .dashboard-table td:nth-child(3),
+    .dashboard-table th:nth-child(4),
+    .dashboard-table td:nth-child(4),
+    .dashboard-table th:nth-child(7),
+    .dashboard-table td:nth-child(7) {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .content-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .summary-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .modal-content {
+        padding: 1.5rem;
+    }
+}
+</style>
+{% endblock %}

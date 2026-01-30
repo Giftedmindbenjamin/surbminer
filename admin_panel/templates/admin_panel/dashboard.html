@@ -1,0 +1,747 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - Minersurb{% endblock %}
+
+{% block admin_content %}
+<!-- Landing page background overlay -->
+<div class="landing-page-overlay"></div>
+
+<!-- Content Header -->
+<div class="content-header">
+    <div class="header-content">
+        <h1>Admin Dashboard</h1>
+        <p>Welcome, {{ user.username }}! Here's your platform overview.</p>
+        <div class="last-login">
+            <i class="fas fa-clock me-1"></i>
+            <small class="text-muted">Last login: <span class="last-login-time"></span></small>
+        </div>
+    </div>
+</div>
+
+{% if messages %}
+<div class="messages-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Pending Actions -->
+<div class="pending-actions">
+    <div class="pending-item">
+        <div class="pending-icon">
+            <i class="fas fa-arrow-down"></i>
+        </div>
+        <div class="pending-content">
+            <h3>{{ pending_deposits }}</h3>
+            <p>Pending Deposits</p>
+        </div>
+        <a href="{% url 'admin_panel:deposit_management' %}?status=PENDING" class="btn btn-primary btn-sm">Review</a>
+    </div>
+    
+    <div class="pending-item">
+        <div class="pending-icon">
+            <i class="fas fa-arrow-up"></i>
+        </div>
+        <div class="pending-content">
+            <h3>{{ pending_withdrawals }}</h3>
+            <p>Pending Withdrawals</p>
+        </div>
+        <a href="{% url 'admin_panel:withdrawal_management' %}?status=PENDING" class="btn btn-primary btn-sm">Review</a>
+    </div>
+    
+    <div class="pending-item">
+        <div class="pending-icon">
+            <i class="fas fa-bell"></i>
+        </div>
+        <div class="pending-content">
+            <h3>{{ unread_notifications }}</h3>
+            <p>Unread Notifications</p>
+        </div>
+        <a href="{% url 'admin_panel:notifications' %}" class="btn btn-primary btn-sm">View</a>
+    </div>
+</div>
+
+<!-- Platform Statistics -->
+<div class="section-header">
+    <h2>
+        <i class="fas fa-chart-bar me-2"></i>
+        Platform Statistics
+    </h2>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-status">
+                <span class="trend-up">
+                    <i class="fas fa-arrow-up me-1"></i>{{ new_users_week }}
+                </span>
+            </div>
+        </div>
+        <div class="stat-value">{{ total_users }}</div>
+        <div class="stat-label">Total Users</div>
+        <div class="stat-description">{{ new_users_today }} new today</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="stat-status">
+                <span class="trend-up">
+                    <i class="fas fa-arrow-up me-1"></i>{{ total_deposits|floatformat:2 }}
+                </span>
+            </div>
+        </div>
+        <div class="stat-value">${{ total_deposits|floatformat:2 }}</div>
+        <div class="stat-label">Total Deposits</div>
+        <div class="stat-description">Approved deposits</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <div class="stat-status">
+                <span class="trend-total">
+                    <i class="fas fa-circle me-1"></i>Total
+                </span>
+            </div>
+        </div>
+        <div class="stat-value">${{ total_withdrawals|floatformat:2 }}</div>
+        <div class="stat-label">Total Withdrawals</div>
+        <div class="stat-description">Approved withdrawals</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-status">
+                <span class="trend-up">
+                    <i class="fas fa-arrow-up me-1"></i>${{ total_investments|floatformat:2 }}
+                </span>
+            </div>
+        </div>
+        <div class="stat-value">${{ total_investments|floatformat:2 }}</div>
+        <div class="stat-label">Active Investments</div>
+        <div class="stat-description">Currently invested</div>
+    </div>
+</div>
+
+<!-- Recent Activities -->
+<div class="dashboard-grid">
+    <!-- Recent Deposits -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-arrow-down me-2"></i>
+                Recent Deposits
+            </h2>
+            <a href="{% url 'admin_panel:deposit_management' %}" class="btn btn-secondary btn-sm">
+                View All
+            </a>
+        </div>
+        
+        {% if recent_deposits %}
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Crypto</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for deposit in recent_deposits %}
+                        <tr>
+                            <td>
+                                <div class="user-info-cell">
+                                    <div class="user-avatar-small">{{ deposit.user.username|first|upper }}</div>
+                                    <div class="user-details">
+                                        <div class="user-name">{{ deposit.user.username }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="amount">${{ deposit.amount }}</td>
+                            <td>
+                                <span class="crypto-badge {{ deposit.crypto_type|lower }}">
+                                    {{ deposit.crypto_type }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge status-{{ deposit.status|lower }}">
+                                    {{ deposit.status|title }}
+                                </span>
+                            </td>
+                            <td class="date">{{ deposit.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state-sm">
+            <i class="fas fa-inbox"></i>
+            <p>No recent deposits</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Recent Withdrawals -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-arrow-up me-2"></i>
+                Recent Withdrawals
+            </h2>
+            <a href="{% url 'admin_panel:withdrawal_management' %}" class="btn btn-secondary btn-sm">
+                View All
+            </a>
+        </div>
+        
+        {% if recent_withdrawals %}
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Crypto</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for withdrawal in recent_withdrawals %}
+                        <tr>
+                            <td>
+                                <div class="user-info-cell">
+                                    <div class="user-avatar-small">{{ withdrawal.user.username|first|upper }}</div>
+                                    <div class="user-details">
+                                        <div class="user-name">{{ withdrawal.user.username }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="amount">${{ withdrawal.amount }}</td>
+                            <td>
+                                <span class="crypto-badge {{ withdrawal.crypto_type|lower }}">
+                                    {{ withdrawal.crypto_type }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge status-{{ withdrawal.status|lower }}">
+                                    {{ withdrawal.status|title }}
+                                </span>
+                            </td>
+                            <td class="date">{{ withdrawal.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state-sm">
+            <i class="fas fa-inbox"></i>
+            <p>No recent withdrawals</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Users -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-user-plus me-2"></i>
+            Recent Users
+        </h2>
+        <a href="{% url 'admin_panel:user_management' %}" class="btn btn-secondary btn-sm">
+            View All
+        </a>
+    </div>
+    
+    {% if recent_users %}
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Balance</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in recent_users %}
+                    <tr>
+                        <td>
+                            <div class="user-info-cell">
+                                <div class="user-avatar-small">{{ user.username|first|upper }}</div>
+                                <div class="user-details">
+                                    <div class="user-name">{{ user.username }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="email">{{ user.email }}</td>
+                        <td class="amount">${{ user.account_balance|floatformat:2 }}</td>
+                        <td>
+                            {% if user.is_active %}
+                            <span class="badge status-active">Active</span>
+                            {% else %}
+                            <span class="badge status-inactive">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="date">{{ user.date_joined|date:"M d, Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state-sm">
+        <i class="fas fa-users"></i>
+        <p>No recent users</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quick Actions -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-bolt me-2"></i>
+            Quick Actions
+        </h2>
+    </div>
+    
+    <div class="actions-grid">
+        <a href="{% url 'admin_panel:user_management' %}" class="action-card">
+            <div class="action-icon users">
+                <i class="fas fa-users"></i>
+            </div>
+            <h4>Manage Users</h4>
+            <p>View and manage all users</p>
+            <div class="action-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+        
+        <a href="{% url 'admin_panel:deposit_management' %}?status=PENDING" class="action-card">
+            <div class="action-icon deposits">
+                <i class="fas fa-arrow-down"></i>
+            </div>
+            <h4>Review Deposits</h4>
+            <p>Approve pending deposits</p>
+            <div class="action-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+        
+        <a href="{% url 'admin_panel:withdrawal_management' %}?status=PENDING" class="action-card">
+            <div class="action-icon withdrawals">
+                <i class="fas fa-arrow-up"></i>
+            </div>
+            <h4>Review Withdrawals</h4>
+            <p>Approve pending withdrawals</p>
+            <div class="action-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+        
+        <a href="{% url 'admin_panel:reports' %}" class="action-card">
+            <div class="action-icon reports">
+                <i class="fas fa-chart-bar"></i>
+            </div>
+            <h4>View Reports</h4>
+            <p>Platform analytics & reports</p>
+            <div class="action-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update last login time
+    const lastLoginElement = document.querySelector('.last-login-time');
+    if (lastLoginElement) {
+        const lastLogin = new Date('{{ user.last_login|date:"c" }}');
+        const now = new Date();
+        const diffHours = Math.floor((now - lastLogin) / (1000 * 60 * 60));
+        
+        let timeAgo;
+        if (diffHours < 1) {
+            timeAgo = 'Just now';
+        } else if (diffHours < 24) {
+            timeAgo = `${diffHours} hours ago`;
+        } else {
+            timeAgo = `${Math.floor(diffHours / 24)} days ago`;
+        }
+        
+        lastLoginElement.textContent = timeAgo;
+    }
+    
+    // Add hover effects to action cards
+    const actionCards = document.querySelectorAll('.action-card');
+    actionCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+
+<style>
+/* Admin Dashboard Specific Styles */
+.pending-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.pending-item {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all var(--transition-normal);
+    backdrop-filter: blur(10px);
+}
+
+.pending-item:hover {
+    border-color: rgba(148, 163, 184, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.pending-icon {
+    width: 50px;
+    height: 50px;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.pending-content {
+    flex: 1;
+}
+
+.pending-content h3 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1;
+}
+
+.pending-content p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0.25rem 0 0 0;
+}
+
+.pending-item .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+}
+
+/* Empty state small */
+.empty-state-sm {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text-muted);
+}
+
+.empty-state-sm i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    opacity: 0.5;
+}
+
+.empty-state-sm p {
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* User info cell */
+.user-info-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.user-avatar-small {
+    width: 32px;
+    height: 32px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.user-details {
+    min-width: 0;
+}
+
+.user-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.email {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.amount {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.date {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+/* Crypto badges */
+.crypto-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.crypto-badge.btc {
+    background: rgba(247, 147, 26, 0.1);
+    color: #f7931a;
+    border: 1px solid rgba(247, 147, 26, 0.2);
+}
+
+.crypto-badge.eth {
+    background: rgba(98, 126, 234, 0.1);
+    color: #627eea;
+    border: 1px solid rgba(98, 126, 234, 0.2);
+}
+
+.crypto-badge.trx {
+    background: rgba(255, 6, 10, 0.1);
+    color: #ff060a;
+    border: 1px solid rgba(255, 6, 10, 0.2);
+}
+
+.crypto-badge.usdt {
+    background: rgba(38, 161, 123, 0.1);
+    color: #26a17b;
+    border: 1px solid rgba(38, 161, 123, 0.2);
+}
+
+/* Status badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.status-pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning-color);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-approved {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-cancelled {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger-color);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.status-active {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-inactive {
+    background: rgba(148, 163, 184, 0.1);
+    color: var(--text-muted);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+/* Dashboard grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Action cards */
+.action-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.action-icon.users {
+    background: linear-gradient(135deg, var(--primary-color), #2563eb);
+}
+
+.action-icon.deposits {
+    background: linear-gradient(135deg, var(--success-color), #059669);
+}
+
+.action-icon.withdrawals {
+    background: linear-gradient(135deg, var(--warning-color), #d97706);
+}
+
+.action-icon.reports {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .pending-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .pending-actions {
+        grid-template-columns: 1fr;
+    }
+    
+    .pending-item {
+        padding: 1.25rem;
+    }
+    
+    .pending-content h3 {
+        font-size: 1.5rem;
+    }
+    
+    .dashboard-section {
+        padding: 1.25rem;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .section-header .btn-sm {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Hide less important columns on mobile */
+    .dashboard-table th:nth-child(2),
+    .dashboard-table td:nth-child(2),
+    .dashboard-table th:nth-child(5),
+    .dashboard-table td:nth-child(5) {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .content-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .pending-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .pending-icon {
+        margin: 0 auto;
+    }
+    
+    .pending-content h3 {
+        font-size: 1.25rem;
+    }
+    
+    .dashboard-section {
+        padding: 1rem;
+    }
+    
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

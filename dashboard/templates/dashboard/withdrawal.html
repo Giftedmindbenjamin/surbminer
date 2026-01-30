@@ -1,0 +1,1180 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Withdrawal - Minersurb{% endblock %}
+
+{% block dashboard_content %}
+<!-- Landing page background overlay -->
+<div class="landing-page-overlay"></div>
+
+<!-- Content Header -->
+<div class="content-header">
+    <div class="header-content">
+        <h1>Request Withdrawal</h1>
+        <p>Withdraw your earnings to your cryptocurrency wallet.</p>
+        <div class="withdrawal-summary">
+            <div class="balance-display">
+                <i class="fas fa-wallet me-2"></i>
+                <div>
+                    <small class="text-muted">Available Balance</small>
+                    <div class="balance-amount">${{ user.account_balance|default:"0.00" }}</div>
+                </div>
+            </div>
+            <div class="withdrawal-info">
+                <div class="info-item">
+                    <i class="fas fa-clock me-2"></i>
+                    <div>
+                        <small class="text-muted">Processing Time</small>
+                        <div class="info-value">Within 2o Minutes</div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-dollar-sign me-2"></i>
+                    <div>
+                        <small class="text-muted">Minimum Withdrawal</small>
+                        <div class="info-value">$10</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if messages %}
+<div class="messages-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Withdrawal Dashboard -->
+<div class="dashboard-grid">
+    <!-- Withdrawal Form -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-arrow-up me-2"></i>
+                Withdrawal Request
+            </h2>
+        </div>
+        
+        <form method="POST" action="{% url 'dashboard:withdrawal' %}" class="withdrawal-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="amount">
+                    <i class="fas fa-dollar-sign me-2"></i>
+                    Amount to Withdraw ($)
+                </label>
+                <div class="input-with-action">
+                    <input type="number" id="amount" name="amount" class="form-control" 
+                           min="10" max="{{ user.account_balance }}" step="0.01" 
+                           placeholder="Enter amount" required>
+                    <button type="button" class="btn-action" onclick="setMaxAmount()">
+                        Max
+                    </button>
+                </div>
+                <div class="form-help">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Available: ${{ user.account_balance|default:"0.00" }} • Min: $10
+                </div>
+                <div class="amount-preview" id="amountPreview">
+                    <div class="preview-label">You will receive:</div>
+                    <div class="preview-value">$0.00</div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="crypto_type">
+                    <i class="fas fa-coins me-2"></i>
+                    Receive Cryptocurrency
+                </label>
+                <div class="crypto-dropdown">
+                    <select id="crypto_type" name="crypto_type" class="form-control" required>
+                        <option value="">Choose cryptocurrency...</option>
+                        <option value="BTC">Bitcoin (BTC)</option>
+                        <option value="ETH">Ethereum (ETH)</option>
+                        <option value="TRX">TRON (TRX)</option>
+                        <option value="USDT">USDT</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="crypto_address">
+                    <i class="fas fa-wallet me-2"></i>
+                    Your Wallet Address
+                </label>
+                <input type="text" id="crypto_address" name="crypto_address" class="form-control" 
+                       placeholder="Enter your wallet address" required>
+                <div class="form-help">
+                    <i class="fas fa-exclamation-circle me-1"></i>
+                    Double-check your wallet address before submitting
+                </div>
+            </div>
+            
+            <div class="form-notes">
+                <div class="note-header">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Important Notes
+                </div>
+                <ul class="note-list">
+                    <li>Withdrawals are processed automatically within 20 minutes</li>
+                    <li>Make sure your wallet address is correct  transactions cannot be reversed</li>
+                    <li>Network fees will be deducted from the withdrawal amount</li>
+                    <li>Minimum withdrawal amount is $2</li>
+                 
+                </ul>
+            </div>
+            
+            <div class="form-submit">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane me-2"></i>Submit Withdrawal Request
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Recent Withdrawals -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-history me-2"></i>
+                Recent Withdrawals
+            </h2>
+            <a href="{% url 'dashboard:history' %}" class="btn btn-secondary">
+                <i class="fas fa-list me-2"></i>View All
+            </a>
+        </div>
+        
+        {% if withdrawals %}
+        <div class="withdrawal-list">
+            {% for withdrawal in withdrawals|slice:":5" %}
+            <div class="withdrawal-item">
+                <div class="withdrawal-icon {% if withdrawal.status == 'APPROVED' %}approved{% elif withdrawal.status == 'PENDING' %}pending{% else %}cancelled{% endif %}">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <div class="withdrawal-content">
+                    <div class="withdrawal-header">
+                        <div class="withdrawal-amount">${{ withdrawal.amount }}</div>
+                        <div class="withdrawal-crypto">{{ withdrawal.crypto_type }}</div>
+                    </div>
+                    <div class="withdrawal-meta">
+                        <div class="withdrawal-date">{{ withdrawal.created_at|date:"M d, Y H:i" }}</div>
+                        <div class="withdrawal-status">
+                            {% if withdrawal.status == 'PENDING' %}
+                            <span class="badge status-pending">
+                                <i class="fas fa-clock me-1"></i>Pending
+                            </span>
+                            {% elif withdrawal.status == 'APPROVED' %}
+                            <span class="badge status-approved">
+                                <i class="fas fa-check-circle me-1"></i>Approved
+                            </span>
+                            {% elif withdrawal.status == 'COMPLETED' %}
+                            <span class="badge status-completed">
+                                <i class="fas fa-check-double me-1"></i>Completed
+                            </span>
+                            {% else %}
+                            <span class="badge status-cancelled">
+                                <i class="fas fa-times-circle me-1"></i>Cancelled
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="withdrawal-address">
+                        <small>{{ withdrawal.crypto_address|truncatechars:20 }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="withdrawal-footer">
+            <div class="withdrawal-info">
+                Showing {{ withdrawals|slice:":5"|length }} of {{ withdrawals.count }} withdrawals
+            </div>
+            {% if withdrawals.count > 5 %}
+            <a href="{% url 'dashboard:history' %}" class="btn btn-secondary btn-sm">
+                View All Withdrawals
+            </a>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-arrow-up"></i>
+            </div>
+            <h3>No Withdrawal History</h3>
+            <p>You haven't made any withdrawals yet. Start withdrawing your earnings!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Important Information -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-info-circle me-2"></i>
+            Withdrawal Information
+        </h2>
+    </div>
+    
+    <div class="info-grid">
+        <div class="info-card">
+            <div class="info-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <h4>Processing Time</h4>
+            <p>All withdrawal requests are processed within 20 minutes.</p>
+        </div>
+        
+        <div class="info-card">
+            <div class="info-icon">
+                <i class="fas fa-percentage"></i>
+            </div>
+            <h4>Network Fees</h4>
+            <p>Blockchain network fees are deducted from your withdrawal amount. Fees vary by cryptocurrency.</p>
+        </div>
+        
+        <div class="info-card">
+            <div class="info-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h4>Security</h4>
+            <p>All withdrawals undergo security verification. You'll receive email confirmation for each request.</p>
+        </div>
+        
+        <div class="info-card">
+            <div class="info-icon">
+                <i class="fas fa-question-circle"></i>
+            </div>
+            <h4>Need Help?</h4>
+            <p>Contact our support team for assistance with your withdrawal or any questions.</p>
+            <a href="{% url 'dashboard:support' %}" class="btn btn-secondary btn-sm mt-2">
+                <i class="fas fa-headset me-2"></i>Contact Support
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Network Fees Information -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2>
+            <i class="fas fa-network-wired me-2"></i>
+            Network Fees Estimate
+        </h2>
+        <small class="text-muted">Approximate fees for different cryptocurrencies</small>
+    </div>
+    
+    <div class="fees-table">
+        <table class="fees-grid">
+            <thead>
+                <tr>
+                    <th>Cryptocurrency</th>
+                    <th>Average Fee</th>
+                    <th>Processing Time</th>
+                    <th>Minimum Confirmation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="crypto-info">
+                            <div class="crypto-icon btc">B</div>
+                            <span>Bitcoin (BTC)</span>
+                        </div>
+                    </td>
+                    <td class="fee-amount">$2 - $5</td>
+                    <td class="fee-time">10 - 30 minutes</td>
+                    <td class="fee-confirm">3 confirmations</td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="crypto-info">
+                            <div class="crypto-icon eth">E</div>
+                            <span>Ethereum (ETH)</span>
+                        </div>
+                    </td>
+                    <td class="fee-amount">$1 - $3</td>
+                    <td class="fee-time">5 - 15 minutes</td>
+                    <td class="fee-confirm">12 confirmations</td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="crypto-info">
+                            <div class="crypto-icon trx">T</div>
+                            <span>TRON (TRX)</span>
+                        </div>
+                    </td>
+                    <td class="fee-amount">$0.5 - $1</td>
+                    <td class="fee-time">1 - 5 minutes</td>
+                    <td class="fee-confirm">19 confirmations</td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="crypto-info">
+                            <div class="crypto-icon usdt">U</div>
+                            <span>USDT</span>
+                        </div>
+                    </td>
+                    <td class="fee-amount">$1 - $4</td>
+                    <td class="fee-time">5 - 20 minutes</td>
+                    <td class="fee-confirm">12 confirmations</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="fees-note">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        <span>Network fees are estimates and may vary based on network congestion.</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Set maximum amount
+function setMaxAmount() {
+    const maxAmount = parseFloat('{{ user.account_balance|default:0 }}');
+    const amountInput = document.getElementById('amount');
+    
+    if (maxAmount >= 10) {
+        amountInput.value = maxAmount.toFixed(2);
+        updateAmountPreview();
+    } else {
+        alert('Minimum withdrawal amount is $10');
+    }
+}
+
+// Update amount preview
+function updateAmountPreview() {
+    const amount = parseFloat(document.getElementById('amount').value) || 0;
+    const maxAmount = parseFloat('{{ user.account_balance|default:0 }}');
+    const preview = document.getElementById('amountPreview');
+    
+    if (amount > 0) {
+        if (amount > maxAmount) {
+            preview.innerHTML = `
+                <div class="preview-label error">Insufficient Balance</div>
+                <div class="preview-value error">$0.00</div>
+            `;
+        } else if (amount < 10) {
+            preview.innerHTML = `
+                <div class="preview-label error">Below Minimum</div>
+                <div class="preview-value error">$0.00</div>
+            `;
+        } else {
+            // In a real app, you'd calculate actual fees here
+            const estimatedFee = amount * 0.02; // 2% estimate
+            const receiveAmount = amount - estimatedFee;
+            
+            preview.innerHTML = `
+                <div class="preview-label">Estimated Receive:</div>
+                <div class="preview-value">$${receiveAmount.toFixed(2)}</div>
+                <div class="preview-note">(Fee: $${estimatedFee.toFixed(2)})</div>
+            `;
+        }
+    } else {
+        preview.innerHTML = `
+            <div class="preview-label">You will receive:</div>
+            <div class="preview-value">$0.00</div>
+        `;
+    }
+}
+
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const amountInput = document.getElementById('amount');
+    const cryptoType = document.getElementById('crypto_type');
+    const cryptoAddress = document.getElementById('crypto_address');
+    const form = document.querySelector('.withdrawal-form');
+    
+    if (amountInput) {
+        amountInput.addEventListener('input', updateAmountPreview);
+        amountInput.addEventListener('change', updateAmountPreview);
+    }
+    
+    // Address validation by crypto type
+    cryptoType.addEventListener('change', function() {
+        const crypto = this.value;
+        const addressPatterns = {
+            'BTC': /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$/,
+            'ETH': /^0x[a-fA-F0-9]{40}$/,
+            'TRX': /^T[a-zA-Z0-9]{33}$/,
+            'USDT': /^0x[a-fA-F0-9]{40}$/
+        };
+        
+        if (addressPatterns[crypto]) {
+            cryptoAddress.pattern = addressPatterns[crypto];
+        }
+    });
+    
+    // Form submission validation
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const amount = parseFloat(amountInput.value) || 0;
+            const maxAmount = parseFloat('{{ user.account_balance|default:0 }}');
+            
+            if (amount < 10) {
+                e.preventDefault();
+                alert('Minimum withdrawal amount is $10');
+                amountInput.focus();
+                return false;
+            }
+            
+            if (amount > maxAmount) {
+                e.preventDefault();
+                alert('Insufficient balance. Available: $' + maxAmount.toFixed(2));
+                amountInput.focus();
+                return false;
+            }
+            
+            if (!cryptoType.value) {
+                e.preventDefault();
+                alert('Please select a cryptocurrency');
+                cryptoType.focus();
+                return false;
+            }
+            
+            if (!cryptoAddress.value.trim()) {
+                e.preventDefault();
+                alert('Please enter your wallet address');
+                cryptoAddress.focus();
+                return false;
+            }
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+                submitBtn.disabled = true;
+            }
+        });
+    }
+});
+
+// Initialize on load
+updateAmountPreview();
+</script>
+
+<style>
+/* Withdrawal Page Specific Styles */
+
+/* Content Header */
+.withdrawal-summary {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.balance-display {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    min-width: 250px;
+}
+
+.balance-display i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    background: rgba(59, 130, 246, 0.1);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+}
+
+.balance-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--success-color);
+    margin-top: 0.25rem;
+}
+
+.withdrawal-info {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    min-width: 200px;
+}
+
+.info-item i {
+    font-size: 1.25rem;
+    color: var(--primary-color);
+    background: rgba(59, 130, 246, 0.1);
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+}
+
+.info-value {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 0.25rem;
+}
+
+/* Messages */
+.messages-container {
+    margin-bottom: 2rem;
+}
+
+.alert {
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+    border: 1px solid;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    backdrop-filter: blur(10px);
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: var(--success-color);
+}
+
+.alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: var(--danger-color);
+}
+
+.alert-info {
+    background: rgba(14, 165, 233, 0.1);
+    border-color: rgba(14, 165, 233, 0.3);
+    color: var(--info-color);
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Form Styles */
+.withdrawal-form {
+    padding: 1rem 0;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.input-with-action {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.input-with-action .form-control {
+    flex: 1;
+}
+
+.btn-action {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.btn-action:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all var(--transition-fast);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.form-help {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Amount Preview */
+.amount-preview {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.preview-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.preview-label.error {
+    color: var(--danger-color);
+}
+
+.preview-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--success-color);
+}
+
+.preview-value.error {
+    color: var(--danger-color);
+}
+
+.preview-note {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+/* Form Notes */
+.form-notes {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: var(--radius-lg);
+}
+
+.note-header {
+    display: flex;
+    align-items: center;
+    color: var(--warning-color);
+    font-weight: 600;
+    font-size: 1.125rem;
+    margin-bottom: 1rem;
+}
+
+.note-list {
+    color: var(--text-muted);
+    padding-left: 1.5rem;
+    margin: 0;
+}
+
+.note-list li {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+.note-list li:last-child {
+    margin-bottom: 0;
+}
+
+.form-submit {
+    margin-top: 2rem;
+}
+
+.form-submit .btn {
+    width: 100%;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Withdrawal List */
+.withdrawal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.withdrawal-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-fast);
+}
+
+.withdrawal-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateX(5px);
+}
+
+.withdrawal-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.withdrawal-icon.approved {
+    background: var(--success-color);
+}
+
+.withdrawal-icon.pending {
+    background: var(--warning-color);
+}
+
+.withdrawal-icon.cancelled {
+    background: var(--danger-color);
+}
+
+.withdrawal-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.withdrawal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.withdrawal-amount {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.withdrawal-crypto {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.withdrawal-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.withdrawal-date {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.withdrawal-address {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    word-break: break-all;
+}
+
+.withdrawal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.withdrawal-info {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* Badge Styles */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning-color);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-approved {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-completed {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.status-cancelled {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger-color);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-muted);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-secondary);
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+.empty-state p {
+    font-size: 1rem;
+    max-width: 400px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
+/* Info Grid */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.info-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    transition: all var(--transition-normal);
+}
+
+.info-card:hover {
+    border-color: rgba(148, 163, 184, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-5px);
+}
+
+.info-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.info-card h4 {
+    color: var(--text-primary);
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.info-card p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+/* Fees Table */
+.fees-table {
+    overflow-x: auto;
+}
+
+.fees-grid {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+
+.fees-grid thead {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.fees-grid th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.fees-grid td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    color: var(--text-secondary);
+}
+
+.fees-grid tbody tr {
+    transition: all var(--transition-fast);
+}
+
+.fees-grid tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.fees-grid tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.crypto-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.crypto-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.crypto-icon.btc {
+    background: linear-gradient(135deg, #f7931a, #ff9900);
+}
+
+.crypto-icon.eth {
+    background: linear-gradient(135deg, #627eea, #8a92b2);
+}
+
+.crypto-icon.trx {
+    background: linear-gradient(135deg, #ff060a, #ff2d55);
+}
+
+.crypto-icon.usdt {
+    background: linear-gradient(135deg, #26a17b, #50af95);
+}
+
+.fee-amount {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.fee-time {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.fee-confirm {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.fees-note {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.fees-note i {
+    color: var(--warning-color);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .info-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .content-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .withdrawal-summary {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .balance-display,
+    .info-item {
+        width: 100%;
+        min-width: unset;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .withdrawal-header,
+    .withdrawal-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .withdrawal-footer {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .content-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .dashboard-section {
+        padding: 1.25rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.25rem;
+    }
+    
+    .input-with-action {
+        flex-direction: column;
+    }
+    
+    .btn-action {
+        width: 100%;
+        padding: 0.75rem;
+    }
+    
+    .withdrawal-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .withdrawal-content {
+        text-align: center;
+    }
+    
+    .fees-grid {
+        font-size: 0.9rem;
+    }
+    
+    .fees-grid th,
+    .fees-grid td {
+        padding: 0.75rem;
+    }
+}
+</style>
+{% endblock %}

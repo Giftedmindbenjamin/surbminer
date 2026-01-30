@@ -1,0 +1,1082 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Transaction History - Minersurb{% endblock %}
+
+{% block dashboard_content %}
+<!-- Landing page background overlay -->
+<div class="landing-page-overlay"></div>
+
+<!-- Content Header -->
+<div class="content-header">
+    <div class="header-content">
+        <h1>Transaction History</h1>
+        <p>Track all your deposits and withdrawals in one place.</p>
+        <div class="history-stats">
+            <div class="stat-item">
+                <i class="fas fa-arrow-down me-2"></i>
+                <div>
+                    <small class="text-muted">Total Deposits</small>
+                    <div class="stat-value">{{ deposits.count }}</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-arrow-up me-2"></i>
+                <div>
+                    <small class="text-muted">Total Withdrawals</small>
+                    <div class="stat-value">{{ withdrawals.count }}</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-exchange-alt me-2"></i>
+                <div>
+                    <small class="text-muted">Total Transactions</small>
+                    <div class="stat-value">{{ deposits.count|add:withdrawals.count }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Section -->
+<div class="dashboard-section">
+    <!-- Tabs Navigation -->
+    <div class="tabs-navigation">
+        <button class="tab-btn active" onclick="showTab('deposits')">
+            <i class="fas fa-arrow-down me-2"></i>
+            Deposits
+            <span class="tab-count">{{ deposits.count }}</span>
+        </button>
+        <button class="tab-btn" onclick="showTab('withdrawals')">
+            <i class="fas fa-arrow-up me-2"></i>
+            Withdrawals
+            <span class="tab-count">{{ withdrawals.count }}</span>
+        </button>
+    </div>
+    
+    <!-- Tabs Content -->
+    <div class="tabs-content">
+        <!-- Deposits Tab -->
+        <div id="depositsTab" class="tab-content active">
+            <div class="tab-header">
+                <h3>
+                    <i class="fas fa-arrow-down me-2"></i>
+                    Deposit History
+                </h3>
+                <div class="tab-actions">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="depositSearch" placeholder="Search deposits..." oninput="searchDeposits()">
+                    </div>
+                    <button class="btn btn-secondary" onclick="exportHistory('deposits')">
+                        <i class="fas fa-download me-2"></i>Export CSV
+                    </button>
+                </div>
+            </div>
+            
+            {% if deposits %}
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table class="dashboard-table" id="depositsTable">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Amount</th>
+                                <th>Crypto</th>
+                                <th>Plan</th>
+                                <th>Status</th>
+                                <th>Transaction ID</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for deposit in deposits %}
+                            <tr>
+                                <td>
+                                    <div class="transaction-date">
+                                        <div class="date">{{ deposit.created_at|date:"M d, Y" }}</div>
+                                        <div class="time">{{ deposit.created_at|date:"H:i" }}</div>
+                                    </div>
+                                </td>
+                                <td class="amount">${{ deposit.amount }}</td>
+                                <td>
+                                    <div class="crypto-badge">
+                                        {{ deposit.crypto_type }}
+                                    </div>
+                                </td>
+                                <td>{{ deposit.plan.name|default:"-" }}</td>
+                                <td>
+                                    {% if deposit.status == 'PENDING' %}
+                                    <span class="badge status-pending">
+                                        <i class="fas fa-clock me-1"></i>Pending
+                                    </span>
+                                    {% elif deposit.status == 'APPROVED' %}
+                                    <span class="badge status-approved">
+                                        <i class="fas fa-check-circle me-1"></i>Approved
+                                    </span>
+                                    {% elif deposit.status == 'COMPLETED' %}
+                                    <span class="badge status-completed">
+                                        <i class="fas fa-check-double me-1"></i>Completed
+                                    </span>
+                                    {% else %}
+                                    <span class="badge status-cancelled">
+                                        <i class="fas fa-times-circle me-1"></i>Cancelled
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if deposit.transaction_hash %}
+                                    <div class="transaction-hash">
+                                        {{ deposit.transaction_hash|truncatechars:12 }}
+                                        <button class="hash-copy" onclick="copyText('{{ deposit.transaction_hash }}')" 
+                                                title="Copy Transaction ID">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn-icon" onclick="viewDepositDetails('{{ deposit.id }}')" 
+                                            title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="table-footer">
+                <div class="table-info">
+                    Showing {{ deposits.count }} deposit{{ deposits.count|pluralize }}
+                </div>
+                <div class="table-pagination">
+                    <button class="pagination-btn" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="pagination-current">1</span>
+                    <button class="pagination-btn" disabled>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <h3>No Deposit History</h3>
+                <p>You haven't made any deposits yet. Start your investment journey today!</p>
+                <a href="{% url 'dashboard:deposit' %}" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus me-2"></i>Make Deposit
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Withdrawals Tab -->
+        <div id="withdrawalsTab" class="tab-content">
+            <div class="tab-header">
+                <h3>
+                    <i class="fas fa-arrow-up me-2"></i>
+                    Withdrawal History
+                </h3>
+                <div class="tab-actions">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="withdrawalSearch" placeholder="Search withdrawals..." oninput="searchWithdrawals()">
+                    </div>
+                    <button class="btn btn-secondary" onclick="exportHistory('withdrawals')">
+                        <i class="fas fa-download me-2"></i>Export CSV
+                    </button>
+                </div>
+            </div>
+            
+            {% if withdrawals %}
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table class="dashboard-table" id="withdrawalsTable">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Amount</th>
+                                <th>Crypto</th>
+                                <th>Wallet Address</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for withdrawal in withdrawals %}
+                            <tr>
+                                <td>
+                                    <div class="transaction-date">
+                                        <div class="date">{{ withdrawal.created_at|date:"M d, Y" }}</div>
+                                        <div class="time">{{ withdrawal.created_at|date:"H:i" }}</div>
+                                    </div>
+                                </td>
+                                <td class="amount">${{ withdrawal.amount }}</td>
+                                <td>
+                                    <div class="crypto-badge">
+                                        {{ withdrawal.crypto_type }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="wallet-address">
+                                        {{ withdrawal.crypto_address|truncatechars:20 }}
+                                        <button class="hash-copy" onclick="copyText('{{ withdrawal.crypto_address }}')" 
+                                                title="Copy Address">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if withdrawal.status == 'PENDING' %}
+                                    <span class="badge status-pending">
+                                        <i class="fas fa-clock me-1"></i>Pending
+                                    </span>
+                                    {% elif withdrawal.status == 'APPROVED' %}
+                                    <span class="badge status-approved">
+                                        <i class="fas fa-check-circle me-1"></i>Approved
+                                    </span>
+                                    {% elif withdrawal.status == 'COMPLETED' %}
+                                    <span class="badge status-completed">
+                                        <i class="fas fa-check-double me-1"></i>Completed
+                                    </span>
+                                    {% else %}
+                                    <span class="badge status-cancelled">
+                                        <i class="fas fa-times-circle me-1"></i>Cancelled
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn-icon" onclick="viewWithdrawalDetails('{{ withdrawal.id }}')" 
+                                            title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="table-footer">
+                <div class="table-info">
+                    Showing {{ withdrawals.count }} withdrawal{{ withdrawals.count|pluralize }}
+                </div>
+                <div class="table-pagination">
+                    <button class="pagination-btn" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="pagination-current">1</span>
+                    <button class="pagination-btn" disabled>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <h3>No Withdrawal History</h3>
+                <p>You haven't made any withdrawals yet. Start withdrawing your earnings!</p>
+                <a href="{% url 'dashboard:withdrawal' %}" class="btn btn-primary mt-3">
+                    <i class="fas fa-money-bill-wave me-2"></i>Request Withdrawal
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Details Modal -->
+<div id="detailsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Transaction Details</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalContent">
+            <!-- Details content will be loaded here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Tab functionality
+function showTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab
+    document.getElementById(tabName + 'Tab').classList.add('active');
+    
+    // Add active class to clicked button
+    event.target.classList.add('active');
+}
+
+// Search functionality
+function searchDeposits() {
+    const searchTerm = document.getElementById('depositSearch').value.toLowerCase();
+    const rows = document.querySelectorAll('#depositsTable tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+}
+
+function searchWithdrawals() {
+    const searchTerm = document.getElementById('withdrawalSearch').value.toLowerCase();
+    const rows = document.querySelectorAll('#withdrawalsTable tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+}
+
+// Copy text to clipboard
+function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Show success message
+        const button = event.target.closest('.hash-copy');
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        button.classList.add('copied');
+        
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.classList.remove('copied');
+        }, 2000);
+    }).catch(err => {
+        alert('Failed to copy text. Please copy manually.');
+    });
+}
+
+// Modal functions
+function openModal(modalId) {
+    document.getElementById(modalId).style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('detailsModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        closeModal();
+    }
+};
+
+// View details functions (placeholder - would need backend API)
+function viewDepositDetails(depositId) {
+    // In a real implementation, you would fetch details from an API
+    document.getElementById('modalTitle').textContent = 'Deposit Details';
+    document.getElementById('modalContent').innerHTML = `
+        <div class="detail-item">
+            <div class="detail-label">Transaction ID</div>
+            <div class="detail-value">${depositId}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Loading details...</div>
+            <div class="detail-value">Please wait</div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+        </div>
+    `;
+    
+    openModal('detailsModal');
+}
+
+function viewWithdrawalDetails(withdrawalId) {
+    document.getElementById('modalTitle').textContent = 'Withdrawal Details';
+    document.getElementById('modalContent').innerHTML = `
+        <div class="detail-item">
+            <div class="detail-label">Withdrawal ID</div>
+            <div class="detail-value">${withdrawalId}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Loading details...</div>
+            <div class="detail-value">Please wait</div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+        </div>
+    `;
+    
+    openModal('detailsModal');
+}
+
+// Export functionality (placeholder)
+function exportHistory(type) {
+    alert(`Exporting ${type} history as CSV...\n\nThis feature would generate and download a CSV file with all your ${type} history.`);
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up event listeners for search inputs
+    const depositSearch = document.getElementById('depositSearch');
+    const withdrawalSearch = document.getElementById('withdrawalSearch');
+    
+    if (depositSearch) {
+        depositSearch.addEventListener('keyup', searchDeposits);
+    }
+    
+    if (withdrawalSearch) {
+        withdrawalSearch.addEventListener('keyup', searchWithdrawals);
+    }
+});
+</script>
+
+<style>
+/* History Page Specific Styles */
+
+/* Content Header */
+.history-stats {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    min-width: 200px;
+}
+
+.stat-item i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    background: rgba(59, 130, 246, 0.1);
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 0.25rem;
+}
+
+/* Tabs Navigation */
+.tabs-navigation {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    padding-bottom: 1px;
+}
+
+.tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.tab-count {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.tab-btn.active .tab-count {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Tabs Content */
+.tabs-content {
+    position: relative;
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tab-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.tab-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tab-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.search-box {
+    position: relative;
+    min-width: 250px;
+}
+
+.search-box i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+.search-box input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 3rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: all var(--transition-fast);
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Table Styles */
+.table-container {
+    overflow-x: auto;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.dashboard-table thead {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.dashboard-table th {
+    padding: 1rem 1.25rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dashboard-table td {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    color: var(--text-secondary);
+    vertical-align: middle;
+}
+
+.dashboard-table tbody tr {
+    transition: all var(--transition-fast);
+}
+
+.dashboard-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Transaction cells */
+.transaction-date {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.transaction-date .date {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.transaction-date .time {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.amount {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 1.05rem;
+}
+
+.crypto-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+/* Badge Styles */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning-color);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-approved {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.status-completed {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-cancelled {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger-color);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Transaction hash/wallet address */
+.transaction-hash, .wallet-address {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.hash-copy {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.hash-copy:hover {
+    color: var(--primary-color);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.hash-copy.copied {
+    color: var(--success-color);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+/* Button icon */
+.btn-icon {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: var(--text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-icon:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Table Footer */
+.table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding: 1rem 0;
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.table-info {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.table-pagination {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.pagination-btn {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.pagination-btn:not(:disabled):hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-current {
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-secondary);
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+.empty-state p {
+    font-size: 1rem;
+    max-width: 400px;
+    margin: 0 auto 1.5rem;
+    line-height: 1.5;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal-content {
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.modal-header h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+/* Details content */
+.detail-item {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.detail-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.detail-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.detail-value {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    word-break: break-all;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .history-stats {
+        gap: 1rem;
+    }
+    
+    .stat-item {
+        min-width: 180px;
+        flex: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .history-stats {
+        flex-direction: column;
+    }
+    
+    .stat-item {
+        width: 100%;
+        min-width: unset;
+    }
+    
+    .tabs-navigation {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 0;
+    }
+    
+    .tab-btn {
+        white-space: nowrap;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .tab-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .tab-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .search-box {
+        min-width: 100%;
+    }
+    
+    .table-container {
+        border: none;
+        background: transparent;
+    }
+    
+    .dashboard-table {
+        min-width: 700px;
+    }
+    
+    .empty-state {
+        padding: 3rem 1rem;
+    }
+    
+    .modal-content {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .content-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .stat-item {
+        padding: 0.875rem;
+    }
+    
+    .stat-item i {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+    
+    .stat-value {
+        font-size: 1.25rem;
+    }
+    
+    .tab-btn {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    .tab-count {
+        padding: 0.125rem 0.5rem;
+        font-size: 0.7rem;
+    }
+    
+    .dashboard-table th,
+    .dashboard-table td {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    /* Hide less important columns on mobile */
+    .dashboard-table th:nth-child(3),
+    .dashboard-table td:nth-child(3),
+    .dashboard-table th:nth-child(6),
+    .dashboard-table td:nth-child(6) {
+        display: none;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.25rem;
+    }
+    
+    .empty-state p {
+        font-size: 0.95rem;
+    }
+}
+</style>
+{% endblock %}
